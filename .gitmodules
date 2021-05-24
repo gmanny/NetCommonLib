@@ -1,0 +1,6 @@
+[submodule "submodules/DequeNET"]
+	path = submodules/DequeNET
+	url = https://github.com/gmanny/DequeNET.git
+[submodule "submodules/NConsoleMenu"]
+	path = submodules/NConsoleMenu
+	url = https://github.com/gmanny/NConsoleMenu.git

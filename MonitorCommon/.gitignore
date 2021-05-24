@@ -1,0 +1,15 @@
+logs
+target
+/.idea
+/.idea_modules
+/.classpath
+/.project
+/.settings
+/RUNNING_PID
+*.diagsession
+/.vs
+*.user
+/bin
+/obj
+/logs
+/results

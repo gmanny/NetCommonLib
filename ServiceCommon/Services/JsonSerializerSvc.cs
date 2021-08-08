@@ -18,6 +18,7 @@ namespace Monitor.ServiceCommon.Services
             var serializer = new JsonSerializer
             {
                 NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
                 ContractResolver = new InterfaceContractResolver(),
                 TypeNameHandling = TypeNameHandling.Auto
             };

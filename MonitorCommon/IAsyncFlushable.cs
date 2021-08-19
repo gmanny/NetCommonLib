@@ -6,4 +6,9 @@ namespace MonitorCommon
     {
         Task Flush();
     }
+
+    public interface IAsyncFlushable<TState> : IAsyncFlushable
+    {
+        Task Flush(TState state);
+    }
 }

@@ -23,9 +23,12 @@ namespace MonitorCommon
 
         public static V GetOrElse<K, V>(this IDictionary<K, V> dict, K key, V def)
         {
-            dict.TryGetValue(key, out def);
+            if (!dict.TryGetValue(key, out var res))
+            {
+                return def;
+            }
 
-            return def;
+            return res;
         }
 
         public static V GetOrElse<K, V>(this IDictionary<K, V> dict, K key, Func<V> def)

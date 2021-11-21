@@ -99,6 +99,8 @@ namespace MonitorCommon.Tasks
 
         public static Task<TResult> Map<TResult>(this Task src, Func<TResult> f) => src.ToUnit().Map(_ => f());
 
+        public static Task<TResult> Map<TIntermediate, TResult>(this Task<TIntermediate> src, Func<TIntermediate, TResult> f) => TaskExtensions.Map(src, f);
+
         public static async Task<TResult> MapAll<TSource, TResult>(this Task<TSource> src, Func<ITaskResult<TSource>, TResult> f) => f(await src.ResultAsync());
 
         public static async Task<TResult> MapAll<TResult>(this Task src, Func<ITaskResult<Unit>, TResult> f) => f(await src.ResultAsync());

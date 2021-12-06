@@ -10,7 +10,15 @@ namespace Monitor.ServiceCommon.Services
 
         public LoggingSvc(ProcessLifetimeSvc lifetime /* this dependency is to let lifetimeSvc register to app exit events before NLog */)
         {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            try
+            {
+                Console.OutputEncoding = System.Text.Encoding.UTF8;
+            }
+            catch
+            {
+                // ignored
+                // occurs when there's no console
+            }
 
             NLog.LogManager.LoadConfiguration("conf/nlog.config");
             Factory.AddNLog();

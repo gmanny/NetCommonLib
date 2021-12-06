@@ -18,16 +18,18 @@ namespace WpfAppCommon
         private readonly string[] args;
         private readonly bool singleInstance;
         private readonly bool signalInitFinish;
+        private readonly bool showConsole;
 
         private WpfAppService<TApp, TMainForm> app;
         private WpfAppStartupSequence<TApp, TMainForm> startupSequenceOverride;
 
-        public WpfAppEntryPoint(List<INinjectModule> additionalModules, string[] args, bool singleInstance = true, bool signalInitFinish = true)
+        public WpfAppEntryPoint(List<INinjectModule> additionalModules, string[] args, bool singleInstance = true, bool signalInitFinish = true, bool showConsole = true)
         {
             this.additionalModules = additionalModules;
             this.args = args;
             this.singleInstance = singleInstance;
             this.signalInitFinish = signalInitFinish;
+            this.showConsole = showConsole;
         }
 
         public void OverrideStartupSequence(WpfAppStartupSequence<TApp, TMainForm> newSequence) => startupSequenceOverride = newSequence;
@@ -45,7 +47,10 @@ namespace WpfAppCommon
                     }
                 }
 
-                WpfAppEntryPointHelper.AllocConsole();
+                if (showConsole)
+                {
+                    WpfAppEntryPointHelper.AllocConsole();
+                }
 
                 IKernel kernel = ServiceCommon.StartCommonService(
                     new CommonServiceConfig
@@ -72,9 +77,12 @@ namespace WpfAppCommon
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                if (showConsole)
+                {
+                    Console.WriteLine(e);
 
-                Console.ReadLine();
+                    Console.ReadLine();
+                }
             }
         }
 

@@ -10,7 +10,15 @@ using SingleInstanceHelper;
 
 namespace WpfAppCommon
 {
-    public class WpfAppEntryPoint<TApp, TMainForm>
+    public interface IWpfAppEntryPoint
+    {
+        public string[] Args { get; }
+        public bool SingleInstance { get; }
+        public bool SignalInitFinish { get; }
+        public bool ShowConsole { get; }
+    }
+
+    public class WpfAppEntryPoint<TApp, TMainForm> : IWpfAppEntryPoint
         where TApp : Application
         where TMainForm : Window
     {
@@ -31,6 +39,14 @@ namespace WpfAppCommon
             this.signalInitFinish = signalInitFinish;
             this.showConsole = showConsole;
         }
+
+        public string[] Args => args;
+
+        public bool SingleInstance => singleInstance;
+
+        public bool SignalInitFinish => signalInitFinish;
+
+        public bool ShowConsole => showConsole;
 
         public void OverrideStartupSequence(WpfAppStartupSequence<TApp, TMainForm> newSequence) => startupSequenceOverride = newSequence;
 
@@ -59,6 +75,7 @@ namespace WpfAppCommon
                     }
                 );
 
+                kernel.Bind<IWpfAppEntryPoint>().ToConstant(this);
                 kernel.Bind<WpfAppService<TApp, TMainForm>>().ToSelf().InSingletonScope();
 
                 app = kernel.Get<WpfAppService<TApp, TMainForm>>();

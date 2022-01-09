@@ -28,20 +28,25 @@ namespace WpfAppCommon.Utils
 
         private static void FormattedTextPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var textBlock = d as TextBlock;
-            if (textBlock == null)
+            InlineCollection inlines = null;
+            if (d is TextBlock tb)
             {
-                return;
+                inlines = tb.Inlines;
+            }
+
+            if (d is Span sp)
+            {
+                inlines = sp.Inlines;
             }
 
             var formattedText = (string)e.NewValue ?? string.Empty;
             formattedText = string.Format("<Span xml:space=\"preserve\" xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\">{0}</Span>", formattedText);
 
-            textBlock.Inlines.Clear();
+            inlines.Clear();
             using (var xmlReader = XmlReader.Create(new StringReader(formattedText)))
             {
                 var result = (Span)XamlReader.Load(xmlReader);
-                textBlock.Inlines.Add(result);
+                inlines.Add(result);
             }
         }
     }

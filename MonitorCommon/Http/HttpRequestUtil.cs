@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,10 @@ namespace MonitorCommon.Http
 
         public static async Task<HttpWebResponse> SendRequestGen(string url, string method = "GET", IEnumerable<(string name, string value)> headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest> setupRequest = null, CancellationToken ct = default)
         {
+            HttpClient c = new HttpClient();
+#pragma warning disable SYSLIB0014
             HttpWebRequest req = (HttpWebRequest) WebRequest.Create(url);
+#pragma warning restore SYSLIB0014
 
             req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             req.Method = method;

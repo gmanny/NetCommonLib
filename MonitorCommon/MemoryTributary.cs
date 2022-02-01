@@ -211,10 +211,10 @@ namespace MonitorCommon
 
                 } while (count > 0);
             }
-            catch (Exception e)
+            catch
             {
                 Position = initialPosition;
-                throw e;
+                throw;
             }
         }
 

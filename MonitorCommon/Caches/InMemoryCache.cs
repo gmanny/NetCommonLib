@@ -37,11 +37,11 @@ public class InMemoryCache<TKey, TValue>
     {
         lock (sync)
         {
-            if (cache.TryGetValue(item.Value.value, out (TValue value, LinkedListNode<TimeBox<TKey>> listNode) val))
+            if (cache.TryGetValue(item.Value.Value, out (TValue value, LinkedListNode<TimeBox<TKey>> listNode) val))
             {
                 onRemove?.Invoke(val.value);
 
-                cache.Remove(item.Value.value);
+                cache.Remove(item.Value.Value);
             }
             usageTimes.Remove(item);
         }
@@ -52,7 +52,7 @@ public class InMemoryCache<TKey, TValue>
         lock (sync)
         {
             LinkedListNode<TimeBox<TKey>> last = usageTimes.Last;
-            while (last != null && now - last.Value.time > maxAge)
+            while (last != null && now - last.Value.Time > maxAge)
             {
                 RemoveItem(last);
 

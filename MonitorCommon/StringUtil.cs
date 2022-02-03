@@ -32,7 +32,7 @@ public static class StringUtil
             return null;
 
         if (str.Length > 1)
-            return char.ToUpper(str[0]) + str.Substring(1);
+            return char.ToUpper(str[0]) + str[1..];
 
         return str.ToUpper();
     }
@@ -40,7 +40,7 @@ public static class StringUtil
     // taken from https://www.30secondsofcode.org/c-sharp/s/to-camel-case
     public static string ToCamelCase(this string str, bool firstLetterUpper = true) 
     {
-        Regex pattern = new Regex(@"[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+");
+        Regex pattern = new(@"[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+");
         return new string(
             CultureInfo.InvariantCulture
                 .TextInfo

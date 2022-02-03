@@ -34,7 +34,7 @@ public class QueuedProcessor<TWork, TResult>
         SpawnSleepingThread();
     }
 
-    public Task<TResult> AddWork(TWork work, CancellationToken ct = default, bool first = false)
+    public Task<TResult> AddWork(TWork work, bool first = false, CancellationToken ct = default)
     {
         TaskCompletionSource<TResult> result = new();
 

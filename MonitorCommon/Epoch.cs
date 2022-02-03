@@ -16,7 +16,7 @@ public static class Epoch
     public static DateTime AsEpoch(this long epoch) => Start.AddSeconds(epoch);
     public static DateTime AsEpochMs(this long epoch) => Start.AddMilliseconds(epoch);
     public static DateTime AsEpochMcs(this long epoch) => AsEpochFileTicks(epoch * 10);
-    public static DateTime AsEpochFileTicks(this long epoch) => new DateTime(epoch + StartTicks, DateTimeKind.Utc);
+    public static DateTime AsEpochFileTicks(this long epoch) => new(epoch + StartTicks, DateTimeKind.Utc);
 
     public static long NowFileTicks
     {

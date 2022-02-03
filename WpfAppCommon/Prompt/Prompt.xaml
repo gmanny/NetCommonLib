@@ -8,13 +8,13 @@
     <Grid>
         <DockPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" Height="32" HorizontalAlignment="Right" Margin="0,0,0,5">
-                <Button x:Name="btnOK" Content="OK" Margin="0,5,5,5" MinWidth="80" IsDefault="True" Click="btnOK_Click"/>
-                <Button x:Name="btnYes" Content="Yes" Margin="0,5,5,5" MinWidth="80" IsDefault="True" Click="btnYes_Click"/>
-                <Button x:Name="btnNo" Content="No" Margin="0,5,5,5" MinWidth="80" IsCancel="True" Click="btnNo_Click"/>
-                <Button x:Name="btnCancel" Content="Cancel" Margin="0,5,5,5" MinWidth="80" IsCancel="True" Click="btnCancel_Click"/>
+                <Button x:Name="btnOK" Content="OK" Margin="0,5,5,5" MinWidth="80" IsDefault="True" Click="BtnOK_Click"/>
+                <Button x:Name="btnYes" Content="Yes" Margin="0,5,5,5" MinWidth="80" IsDefault="True" Click="BtnYes_Click"/>
+                <Button x:Name="btnNo" Content="No" Margin="0,5,5,5" MinWidth="80" IsCancel="True" Click="BtnNo_Click"/>
+                <Button x:Name="btnCancel" Content="Cancel" Margin="0,5,5,5" MinWidth="80" IsCancel="True" Click="BtnCancel_Click"/>
             </StackPanel>
             <DockPanel DockPanel.Dock="Bottom">
-                <Button x:Name="btnGenerate" DockPanel.Dock="Right" Content="⟲" Width="24" Height="24" Margin="0,5,5,5" Click="btnGenerate_Click"/>
+                <Button x:Name="btnGenerate" DockPanel.Dock="Right" Content="⟲" Width="24" Height="24" Margin="0,5,5,5" Click="BtnGenerate_Click"/>
                 <TextBox x:Name="tbInput" Margin="5" Height="24"/>
             </DockPanel>
             <DockPanel MinHeight="100">

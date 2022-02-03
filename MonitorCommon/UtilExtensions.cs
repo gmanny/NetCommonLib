@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using LanguageExt;
@@ -10,7 +9,6 @@ using static LanguageExt.Prelude;
 
 namespace MonitorCommon;
 
-[SuppressMessage("ReSharper", "InconsistentNaming")]
 public static class UtilExtensions
 {
     public static IEnumerable<(A, B)> CMul<A, B>(this IEnumerable<A> a, IEnumerable<B> b) =>
@@ -61,7 +59,7 @@ public static class UtilExtensions
             return c.CommaString();
         }
 
-        StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new();
 
         builder.Append(c.Take(chunkLength).JoinedString(prefix, separator));
             
@@ -91,7 +89,7 @@ public static class UtilExtensions
     public static string CommaString<T>(this IEnumerable<T> c) => c.JoinedString("[", ", ", "]");
     public static string JoinedString<T>(this IEnumerable<T> c, string prefix = null, string separator = null, string postfix = null)
     {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new();
 
         if (c != null)
         {
@@ -294,9 +292,9 @@ public static class UtilExtensions
 
     public static bool IsNullOrEmpty(this string str) => String.IsNullOrEmpty(str);
 
-    public static string TakeString(this string str, int chars) => str.Substring(0, Math.Min(str.Length, chars));
+    public static string TakeString(this string str, int chars) => str[..Math.Min(str.Length, chars)];
 
-    public static string[] SplitAt(this string str, int index) => new[] {str.Substring(0, index), str.Substring(index)};
+    public static string[] SplitAt(this string str, int index) => new[] { str[..index], str[index..] };
 
     public static string Truncate(this string value, int maxLength)
     {

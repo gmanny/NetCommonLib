@@ -25,23 +25,23 @@ public abstract class CascadeJsonConverterBase : JsonConverter
     {
         if (augmentConverterObj is not object[] augmentConverter)
         {
-            throw new ArgumentException($"Each augment converter data should be an object array", nameof(augmentConverters));
+            throw new ArgumentException($"Each augment converter data should be an object array", nameof(augmentConverterObj));
         }
 
         if (augmentConverter.Length < 1)
         {
-            throw new ArgumentException($"Augment converter data should include at least one item", nameof(augmentConverters));
+            throw new ArgumentException($"Augment converter data should include at least one item", nameof(augmentConverterObj));
         }
 
         object augmentConverterType = augmentConverter[0];
         if (augmentConverterType is not Type convType)
         {
-            throw new ArgumentException($"Augment converter data should start with its type", nameof(augmentConverters));
+            throw new ArgumentException($"Augment converter data should start with its type", nameof(augmentConverterObj));
         }
 
         if (!typeof(JsonConverter).IsAssignableFrom(convType))
         {
-            throw new ArgumentException($"Augment converter type should inherit from JsonConverter abstract type", nameof(augmentConverters));
+            throw new ArgumentException($"Augment converter type should inherit from JsonConverter abstract type", nameof(augmentConverterObj));
         }
 
         object converter = Activator.CreateInstance(convType, augmentConverter[1..]);

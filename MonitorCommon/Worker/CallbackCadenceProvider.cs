@@ -135,5 +135,7 @@ public class CallbackCadenceProvider<TState> : IDisposable
         canceled = true;
 
         timer.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }

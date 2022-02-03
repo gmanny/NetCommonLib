@@ -101,5 +101,7 @@ public class ObservableCollectionAsyncProxy<TItem> : IDisposable
     {
         // end the subscription
         collectionSubscription.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }

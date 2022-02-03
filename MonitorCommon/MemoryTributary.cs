@@ -28,7 +28,9 @@ namespace MonitorCommon
             {
                 SetLength(length);
                 Position = length;
-                byte[] d = block;   //access block to prompt the allocation of memory
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+                byte[] d = Block;   //access block to prompt the allocation of memory
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
                 Position = 0;
             }
         }
@@ -44,7 +46,9 @@ namespace MonitorCommon
         {
             SetLength(length);
             Position = length;
-            byte[] d = block;   //access block to prompt the allocation of memory
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+            byte[] d = Block;   //access block to prompt the allocation of memory
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
             Position = 0;
         }
 
@@ -86,7 +90,7 @@ namespace MonitorCommon
 
         protected long blockSize = 65536;
 
-        protected List<byte[]> blocks = new List<byte[]>();
+        protected List<byte[]> blocks = new();
 
         #endregion
 
@@ -97,29 +101,24 @@ namespace MonitorCommon
         /// <summary>
         /// The block of memory currently addressed by Position
         /// </summary>
-        protected byte[] block
+        protected byte[] Block
         {
             get
             {
-                while (blocks.Count <= blockId)
+                while (blocks.Count <= BlockId)
                     blocks.Add(new byte[blockSize]);
-                return blocks[(int)blockId];
+                return blocks[(int)BlockId];
             }
         }
         /// <summary>
         /// The id of the block currently addressed by Position
         /// </summary>
-        protected long blockId
-        {
-            get { return Position / blockSize; }
-        }
+        protected long BlockId => Position / blockSize;
+
         /// <summary>
         /// The offset of the byte currently addressed by Position, into the block that contains it
         /// </summary>
-        protected long blockOffset
-        {
-            get { return Position % blockSize; }
-        }
+        protected long BlockOffset => Position % blockSize;
 
         #endregion
 
@@ -131,11 +130,11 @@ namespace MonitorCommon
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            long lcount = (long)count;
+            long lcount = count;
 
             if (lcount < 0)
             {
-                throw new ArgumentOutOfRangeException("count", lcount, "Number of bytes to copy cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(count), lcount, "Number of bytes to copy cannot be negative.");
             }
 
             long remaining = (length - Position);
@@ -144,19 +143,19 @@ namespace MonitorCommon
 
             if (buffer == null)
             {
-                throw new ArgumentNullException("buffer", "Buffer cannot be null.");
+                throw new ArgumentNullException(nameof(buffer), "Buffer cannot be null.");
             }
             if (offset < 0)
             {
-                throw new ArgumentOutOfRangeException("offset",offset,"Destination offset cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(offset),offset,"Destination offset cannot be negative.");
             }
 
             int read = 0;
-            long copysize = 0;
+            long copysize;
             do
 	        {
-                copysize = Math.Min(lcount, (blockSize - blockOffset));
-                Buffer.BlockCopy(block, (int)blockOffset, buffer, offset, (int)copysize);
+                copysize = Math.Min(lcount, (blockSize - BlockOffset));
+                Buffer.BlockCopy(Block, (int)BlockOffset, buffer, offset, (int)copysize);
                 lcount -= copysize;
                 offset += (int)copysize;
 
@@ -199,11 +198,11 @@ namespace MonitorCommon
             {
                 do
                 {
-                    copysize = Math.Min(count, (int)(blockSize - blockOffset));
+                    copysize = Math.Min(count, (int)(blockSize - BlockOffset));
 
                     EnsureCapacity(Position + copysize);
 
-                    Buffer.BlockCopy(buffer, (int)offset, block, (int)blockOffset, copysize);
+                    Buffer.BlockCopy(buffer, (int)offset, Block, (int)BlockOffset, copysize);
                     count -= copysize;
                     offset += copysize;
 
@@ -223,7 +222,7 @@ namespace MonitorCommon
             if (Position >= length)
                 return -1;
 
-            byte b = block[blockOffset];
+            byte b = Block[BlockOffset];
             Position++;
 
             return b;
@@ -232,7 +231,7 @@ namespace MonitorCommon
         public override void WriteByte(byte value)
         {
             EnsureCapacity(Position + 1);
-            block[blockOffset] = value;
+            Block[BlockOffset] = value;
             Position++;
         }
 

@@ -243,5 +243,7 @@ public abstract class AbstractCollectionSubscriptionHelper<TItem> : IDisposable
             // process all children
             RemoveAllItems();
         }
+
+        GC.SuppressFinalize(this);
     }
 }

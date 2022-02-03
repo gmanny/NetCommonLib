@@ -49,11 +49,13 @@ public static class ThreadUtil
         for (int i = 0; i < threads.Length; i++)
         {
             int k = i;
-            var tcs = new TaskCompletionSource<Unit>();
+            TaskCompletionSource<Unit> tcs = new();
             completed[i] = tcs.Task;
 
-            threads[i] = new Thread(() => RunActions(k, threadCount, tcs));
-            threads[i].Name = threadName(k);
+            threads[i] = new Thread(() => RunActions(k, threadCount, tcs))
+            {
+                Name = threadName(k)
+            };
 
             threads[i].Start();
         }

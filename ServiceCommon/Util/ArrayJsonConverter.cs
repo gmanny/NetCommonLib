@@ -31,7 +31,7 @@ public abstract class ArrayJsonConverter<T> : JsonConverter<T>
 
     public sealed override void WriteJson(JsonWriter writer, T value, JsonSerializer serializer)
     {
-        JArray arr = new JArray(WriteJson(value, serializer));
+        JArray arr = new(WriteJson(value, serializer));
 
         arr.WriteTo(writer);
     }

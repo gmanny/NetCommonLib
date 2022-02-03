@@ -11,5 +11,7 @@ public class DisposableArrayContainer<T> : IDisposable where T : IDisposable
     public void Dispose()
     {
         items.ForEach(i => i.Dispose());
+
+        GC.SuppressFinalize(this);
     }
 }

@@ -6,7 +6,7 @@ public class ConfigurationSvc
 {
     public ConfigurationSvc(CommonServiceConfig cfg)
     {
-        ConfigurationBuilder cb = new ConfigurationBuilder();
+        ConfigurationBuilder cb = new();
         cb.AddJsonFile("conf/config.json")
             .AddEnvironmentVariables("MON_");
 

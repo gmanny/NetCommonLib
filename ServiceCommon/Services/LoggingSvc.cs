@@ -43,6 +43,8 @@ public class LoggerProvider : ILoggerProvider
     public void Dispose()
     {
         disposed = true;
+
+        GC.SuppressFinalize(this);
     }
 
     public ILogger CreateLogger(string categoryName)

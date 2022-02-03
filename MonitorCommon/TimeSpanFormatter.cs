@@ -41,7 +41,7 @@ public static class TimeSpanFormatter
     public class HMSFormatter : ICustomFormatter, IFormatProvider
     {
         // list of Formats, with a P customformat for pluralization
-        static Dictionary<string, string> timeformats = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> timeformats = new()
         {
             {"S", "{0:P:Seconds:Second}"},
             {"M", "{0:P:Minutes:Minute}"},

@@ -65,7 +65,7 @@ public class WpfAppEntryPoint<TApp, TMainForm> : IWpfAppEntryPoint
 
             if (showConsole)
             {
-                WpfAppEntryPointHelper.AllocConsole();
+                WpfAppEntryPointHelper.AllocateConsole();
             }
 
             IKernel kernel = ServiceCommon.StartCommonService(
@@ -116,5 +116,7 @@ public class WpfAppEntryPointHelper
 {
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool AllocConsole();
+    private static extern bool AllocConsole();
+
+    public static bool AllocateConsole() => AllocConsole();
 }

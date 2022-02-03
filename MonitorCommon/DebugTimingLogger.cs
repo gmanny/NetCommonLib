@@ -21,5 +21,7 @@ public class DebugTimingLogger : IDisposable
     public void Dispose()
     {
         logger.LogInformation($"{operation} took {(Environment.TickCount - start) / 1000.0:#.00}s");
+
+        GC.SuppressFinalize(this);
     }
 }

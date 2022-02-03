@@ -102,5 +102,7 @@ public class CollectionPropertySubscriptionHelper<TItem> : IDisposable
         objectWithProperty.PropertyChanged -= OnObjectWithPropertyPropertyChanged;
 
         currentHelper?.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 }

@@ -21,7 +21,7 @@ public class AsyncSequentializer
 
     public async Task<T> NextAction<T>(Func<Task<T>> work, bool noDelay = false)
     {
-        TaskCompletionSource<T> next = new TaskCompletionSource<T>();
+        TaskCompletionSource<T> next = new();
         Task<T> ret = next.Task;
         TaskContainer ntx = new(ret, delay.Ticks > 0 ? ret.FlatMapAll(_ => Task.Delay(delay).ToUnit()) : ret.ToUnit());
 

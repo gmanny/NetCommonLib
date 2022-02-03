@@ -219,6 +219,8 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
         // end both subscriptions (items are removed automatically)
         outerCollectionSubscription.Dispose();
         itemBlockSubscription.Dispose();
+
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>
@@ -227,7 +229,9 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
     /// <param name="item">item which addition should be checked</param>
     /// <returns>true, if this item is being added right now, otherwise false</returns>
 // ReSharper disable UnusedMember.Local
+#pragma warning disable IDE0051 // Remove unused private members
     private bool InsertingThisItem(TOuterItem item)
+#pragma warning restore IDE0051 // Remove unused private members
 // ReSharper restore UnusedMember.Local
     {
         // shortcut

@@ -11,7 +11,7 @@ public class InitSignal<TResource>
 {
     private readonly ILogger logger;
 
-    private TaskCompletionSource<Unit> allInited = new();
+    private readonly TaskCompletionSource<Unit> allInited = new();
 
     public InitSignal(ILogger logger)
     {

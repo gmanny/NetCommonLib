@@ -12,7 +12,7 @@ public class OptionJsonConverter : JsonConverter
     private static readonly object[] NullParams = { null };
     private static readonly ConcurrentDictionary<Type, ReflectionTypeData> CachedReflection = new();
 
-    private ReflectionTypeData GetForOptionType(Type optionType)
+    private static ReflectionTypeData GetForOptionType(Type optionType)
     {
         return CachedReflection.GetOrAdd(optionType.GetGenericArguments().First(), _ => new ReflectionTypeData(optionType));
     }

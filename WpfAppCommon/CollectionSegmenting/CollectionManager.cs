@@ -111,7 +111,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
         }
 
         // wrap the item block into the block handler, the addition happens automatically
-        ItemBlockHandler<TOuterItem, TInnerItem> blockHandler = new ItemBlockHandler<TOuterItem, TInnerItem>(block, collection, itemConverter, this, initialCollectionIndex, helper => blockHandlers.Insert(index, helper));
+        ItemBlockHandler<TOuterItem, TInnerItem> blockHandler = new(block, collection, itemConverter, this, initialCollectionIndex, helper => blockHandlers.Insert(index, helper));
 
         // remember block handler for the block
         blockHandlerHash.Add(block, blockHandler);
@@ -198,5 +198,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
         // clear other stuff
         blockHandlerHash.Clear();
         itemBlockTypeHash.Clear();
+
+        GC.SuppressFinalize(this);
     }
 }

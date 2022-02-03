@@ -51,20 +51,20 @@ public class TiltWheelHorizontalScroller
     public static readonly DependencyProperty EnableTiltWheelScrollProperty =
         DependencyProperty.RegisterAttached("EnableTiltWheelScroll", typeof(bool), typeof(TiltWheelHorizontalScroller), new UIPropertyMetadata(false, OnHorizontalMouseWheelScrollingEnabledChanged));
 
-    static HashSet<int> controls = new();
-    static void OnHorizontalMouseWheelScrollingEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs args)
+    private static readonly HashSet<int> Controls = new();
+    private static void OnHorizontalMouseWheelScrollingEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs args)
     {
-        if (d is not Control control || !GetEnableTiltWheelScroll(d) || !controls.Add(control.GetHashCode()))
+        if (d is not Control control || !GetEnableTiltWheelScroll(d) || !Controls.Add(control.GetHashCode()))
         {
             return;
         }
 
-        control.MouseEnter += (sender, e) =>
+        control.MouseEnter += (_, _) =>
         {
             ScrollViewer scrollViewer = d.FindChildOfType<ScrollViewer>();
             if (scrollViewer != null)
             {
-                new TiltWheelMouseScrollHelper(scrollViewer, d);
+                _ = new TiltWheelMouseScrollHelper(scrollViewer, d);
             }
         };
     }
@@ -77,10 +77,10 @@ public class TiltWheelMouseScrollHelper
     /// </summary>
     private const int scrollFactor = 200;
     private const int WM_MOUSEHWEEL = 0x20e;
-    ScrollViewer scrollViewer;
-    HwndSource hwndSource;
-    HwndSourceHook hook;
-    static HashSet<int> scrollViewers = new();
+    private readonly ScrollViewer scrollViewer;
+    private readonly HwndSource hwndSource;
+    private readonly HwndSourceHook hook;
+    private static readonly HashSet<int> scrollViewers = new();
 
     public TiltWheelMouseScrollHelper(ScrollViewer scrollViewer, DependencyObject d)
     {

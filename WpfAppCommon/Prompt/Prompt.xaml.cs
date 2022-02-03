@@ -28,7 +28,7 @@ public partial class Prompt
     public static string YesText { get; set; }
     public static string NoText { get; set; }
 
-    private Dictionary<string, List<string>> lang = new()
+    private readonly Dictionary<string, List<string>> lang = new()
     {
         {"ru-RU", new List<string> {"OK","Отмена","Да","Нет" } },
         {"en-US", new List<string> {"OK","Cancel","Yes","No" } }
@@ -128,31 +128,31 @@ public partial class Prompt
         if (!string.IsNullOrEmpty(NoText)) { btnNo.Content = NoText; }
     }
 
-    private void btnCancel_Click(object sender, RoutedEventArgs e)
+    private void BtnCancel_Click(object sender, RoutedEventArgs e)
     {
         messageboxResult = MessageBoxResult.Cancel;
         DialogResult = true;
     }
 
-    private void btnNo_Click(object sender, RoutedEventArgs e)
+    private void BtnNo_Click(object sender, RoutedEventArgs e)
     {
         messageboxResult = MessageBoxResult.No;
         DialogResult = true;
     }
 
-    private void btnYes_Click(object sender, RoutedEventArgs e)
+    private void BtnYes_Click(object sender, RoutedEventArgs e)
     {
         messageboxResult = MessageBoxResult.Yes;
         DialogResult = true;
     }
 
-    private void btnOK_Click(object sender, RoutedEventArgs e)
+    private void BtnOK_Click(object sender, RoutedEventArgs e)
     {
         messageboxResult = MessageBoxResult.OK;
         DialogResult = true;
     }
 
-    private void btnGenerate_Click(object sender, RoutedEventArgs e)
+    private void BtnGenerate_Click(object sender, RoutedEventArgs e)
     {
         tbInput.Text = "12345";
         tbInput.SelectAll();

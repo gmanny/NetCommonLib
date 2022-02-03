@@ -47,9 +47,9 @@ public static class HttpRequestUtil
 
         if (headers != null)
         {
-            foreach ((string name, string value) header in headers)
+            foreach ((string name, string value) in headers)
             {
-                req.Headers.Add(header.name, header.value);
+                req.Headers.Add(name, value);
             }
         }
 
@@ -84,7 +84,7 @@ public static class HttpRequestUtil
     {
         Stream responseStream = await SendRequestChecked(url, method, headers, allowAutoRedirect, setupRequest, ct);
             
-        StreamReader sr = new StreamReader(responseStream);
+        StreamReader sr = new(responseStream);
         return await sr.ReadToEndAsync();
     }
 

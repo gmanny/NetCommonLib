@@ -17,5 +17,7 @@ public class DelegateDisposable : IDisposable
         {
             action();
         }
+
+        GC.SuppressFinalize(this);
     }
 }

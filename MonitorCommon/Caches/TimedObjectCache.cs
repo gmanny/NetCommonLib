@@ -17,17 +17,17 @@ public class TimedObjectCache<T>
     {
         DateTime now = DateTime.Now;
 
-        if (now - current.time > maxAge)
+        if (now - current.Time > maxAge)
         {
             lock (this)
             {
-                if (now - current.time > maxAge)
+                if (now - current.Time > maxAge)
                 {
                     current = new TimeBox<T>(now, producer());
                 }
             }
         }
 
-        return current.value;
+        return current.Value;
     }
 }

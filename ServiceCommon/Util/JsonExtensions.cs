@@ -14,15 +14,15 @@ public static class JsonExtensions
         public const int SnippetLength = 256;
 
         public JsonDeserializationSnippetException(Exception cause, string data)
-            : base($"{cause.Message}, data snippet: {data.Substring(0, Math.Min(SnippetLength, data.Length))}", cause)
+            : base($"{cause.Message}, data snippet: {data[..Math.Min(SnippetLength, data.Length)]}", cause)
         { }
     }
 
     public static T Deserialize<T>(this JsonSerializer ser, Stream value)
     {
-        using SnippetCachingStream snippet = new SnippetCachingStream(value, snippetLength: JsonDeserializationSnippetException.SnippetLength);
-        using StreamReader reader = new StreamReader(snippet);
-        using JsonReader jsonReader = new JsonTextReader(reader);
+        using SnippetCachingStream snippet = new(value, snippetLength: JsonDeserializationSnippetException.SnippetLength);
+        using StreamReader reader = new(snippet);
+        using JsonTextReader jsonReader = new(reader);
 
         try
         {
@@ -60,8 +60,8 @@ public static class JsonExtensions
     {
         ArgumentNullException.ThrowIfNull(ser);
 
-        using StringReader reader = new StringReader(value);
-        using JsonReader jsonReader = new JsonTextReader(reader);
+        using StringReader reader = new(value);
+        using JsonTextReader jsonReader = new(reader);
 
         try
         {
@@ -75,16 +75,16 @@ public static class JsonExtensions
 
     public static void Serialize<T>(this JsonSerializer ser, Stream stream, T value, bool beautify = false)
     {
-        using StreamWriter writer = new StreamWriter(stream);
-        using JsonWriter jsonWriter = new JsonTextWriter(writer) {Formatting = beautify ? Formatting.Indented : Formatting.None};
+        using StreamWriter writer = new(stream);
+        using JsonTextWriter jsonWriter = new(writer) {Formatting = beautify ? Formatting.Indented : Formatting.None};
 
         ser.Serialize(jsonWriter, value);
     }
 
     public static string Serialize<T>(this JsonSerializer ser, T value, bool beautify = false)
     {
-        using StringWriter writer = new StringWriter();
-        using JsonWriter jsonWriter = new JsonTextWriter(writer) {Formatting = beautify ? Formatting.Indented : Formatting.None};
+        using StringWriter writer = new();
+        using JsonTextWriter jsonWriter = new(writer) {Formatting = beautify ? Formatting.Indented : Formatting.None};
         
         ser.Serialize(jsonWriter, value);
 

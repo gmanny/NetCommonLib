@@ -2,45 +2,44 @@
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace Monitor.ServiceCommon.Services.Json
+namespace Monitor.ServiceCommon.Services.Json;
+
+public class CascadeJsonConverter : CascadeJsonConverterBase
 {
-    public class CascadeJsonConverter : CascadeJsonConverterBase
+    private readonly JsonConverter wrappedConverter;
+
+    public CascadeJsonConverter(Type wrappedConverterType, object[] wrappedConvConstructorArgs, object[] augmentConverters)
+        : this(CreateConverter(wrappedConverterType, wrappedConvConstructorArgs), augmentConverters.Select(FromAttributeData).ToArray())
+    { }
+
+    public CascadeJsonConverter(JsonConverter wrappedConverter, JsonConverter[] augmentConverters)
+        : base(augmentConverters)
     {
-        private readonly JsonConverter wrappedConverter;
+        this.wrappedConverter = wrappedConverter;
+    }
 
-        public CascadeJsonConverter(Type wrappedConverterType, object[] wrappedConvConstructorArgs, object[] augmentConverters)
-            : this(CreateConverter(wrappedConverterType, wrappedConvConstructorArgs), augmentConverters.Select(FromAttributeData).ToArray())
-        { }
-
-        public CascadeJsonConverter(JsonConverter wrappedConverter, JsonConverter[] augmentConverters)
-            : base(augmentConverters)
+    private static JsonConverter CreateConverter(Type converterType, object[] convConstructorArgs)
+    {
+        if (!typeof(JsonConverter).IsAssignableFrom(converterType))
         {
-            this.wrappedConverter = wrappedConverter;
+            throw new ArgumentException($"Converter type should inherit from JsonConverter abstract type", nameof(converterType));
         }
 
-        private static JsonConverter CreateConverter(Type converterType, object[] convConstructorArgs)
-        {
-            if (!typeof(JsonConverter).IsAssignableFrom(converterType))
-            {
-                throw new ArgumentException($"Converter type should inherit from JsonConverter abstract type", nameof(converterType));
-            }
+        return (JsonConverter) Activator.CreateInstance(converterType, convConstructorArgs);
+    }
 
-            return (JsonConverter) Activator.CreateInstance(converterType, convConstructorArgs);
-        }
+    public override bool CanConvert(Type objectType)
+    {
+        return wrappedConverter.CanConvert(objectType);
+    }
 
-        public override bool CanConvert(Type objectType)
-        {
-            return wrappedConverter.CanConvert(objectType);
-        }
+    protected override void WriteJsonInner(JsonWriter writer, object value, JsonSerializer serializer)
+    {
+        wrappedConverter.WriteJson(writer, value, serializer);
+    }
 
-        protected override void WriteJsonInner(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            wrappedConverter.WriteJson(writer, value, serializer);
-        }
-
-        protected override object ReadJsonInner(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            return wrappedConverter.ReadJson(reader, objectType, existingValue, serializer);
-        }
+    protected override object ReadJsonInner(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    {
+        return wrappedConverter.ReadJson(reader, objectType, existingValue, serializer);
     }
 }

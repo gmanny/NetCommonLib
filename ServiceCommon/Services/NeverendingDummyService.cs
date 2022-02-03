@@ -1,14 +1,13 @@
 ﻿using System.Threading.Tasks;
 using LanguageExt;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public class NeverendingDummyService : IRunningService
 {
-    public class NeverendingDummyService : IRunningService
-    {
-        private readonly TaskCompletionSource<Unit> notFinished = new TaskCompletionSource<Unit>();
+    private readonly TaskCompletionSource<Unit> notFinished = new();
 
-        public string ServiceId => GetType().Name;
+    public string ServiceId => GetType().Name;
 
-        public Task Finished => notFinished.Task;
-    }
+    public Task Finished => notFinished.Task;
 }

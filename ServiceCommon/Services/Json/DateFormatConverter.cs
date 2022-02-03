@@ -1,12 +1,11 @@
 ﻿using Newtonsoft.Json.Converters;
 
-namespace Monitor.ServiceCommon.Services.Json
+namespace Monitor.ServiceCommon.Services.Json;
+
+public class DateFormatConverter : IsoDateTimeConverter
 {
-    public class DateFormatConverter : IsoDateTimeConverter
+    public DateFormatConverter(string format)
     {
-        public DateFormatConverter(string format)
-        {
-            DateTimeFormat = format;
-        }
+        DateTimeFormat = format;
     }
 }

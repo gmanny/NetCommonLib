@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Monitor.ServiceCommon.Services.InitStage
+namespace Monitor.ServiceCommon.Services.InitStage;
+
+public abstract class CommonInitSvc<TResource> : CommonInitRunningSvc<TResource>
 {
-    public abstract class CommonInitSvc<TResource> : CommonInitRunningSvc<TResource>
+    protected CommonInitSvc(ILogger logger, string serviceId = null) : base(logger, serviceId)
     {
-        protected CommonInitSvc(ILogger logger, string serviceId = null) : base(logger, serviceId)
-        {
-            FinishedSuccess();
-        }
+        FinishedSuccess();
     }
 }

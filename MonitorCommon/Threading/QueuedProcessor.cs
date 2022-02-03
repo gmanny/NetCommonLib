@@ -7,239 +7,231 @@ using LanguageExt;
 using Microsoft.Extensions.Logging;
 using MonitorCommon.Tasks;
 
-namespace MonitorCommon.Threading
+namespace MonitorCommon.Threading;
+
+public class QueuedProcessor<TWork, TResult>
 {
-    public class QueuedProcessor<TWork, TResult>
+    private readonly Func<TWork, CancellationToken, Task<TResult>> workProcessor;
+    private readonly int threadCount;
+    private readonly string name;
+    private readonly ILogger logger;
+    private readonly TimeSpan intraTaskDelay;
+    private readonly TimeSpan workerThreadSleepDelay;
+
+    private readonly ConcurrentDictionary<TWork, QueueRecord> workCache = new();
+    private readonly ConcurrentDeque<QueueRecord> queue = new();
+    private readonly object sync = new();
+
+    public QueuedProcessor(Func<TWork, CancellationToken, Task<TResult>> workProcessor, int threadCount, string name, ILogger logger, TimeSpan intraTaskDelay, TimeSpan workerThreadSleepDelay)
     {
-        private readonly Func<TWork, CancellationToken, Task<TResult>> workProcessor;
-        private readonly int threadCount;
-        private readonly string name;
-        private readonly ILogger logger;
-        private readonly TimeSpan intraTaskDelay;
-        private readonly TimeSpan workerThreadSleepDelay;
+        this.workProcessor = workProcessor;
+        this.threadCount = threadCount;
+        this.name = name;
+        this.logger = logger;
+        this.intraTaskDelay = intraTaskDelay;
+        this.workerThreadSleepDelay = workerThreadSleepDelay;
 
-        private readonly ConcurrentDictionary<TWork, QueueRecord> workCache = new ConcurrentDictionary<TWork, QueueRecord>();
-        private readonly ConcurrentDeque<QueueRecord> queue = new ConcurrentDeque<QueueRecord>();
-        private readonly object sync = new Object();
+        SpawnSleepingThread();
+    }
 
-        public QueuedProcessor(Func<TWork, CancellationToken, Task<TResult>> workProcessor, int threadCount, string name, ILogger logger, TimeSpan intraTaskDelay, TimeSpan workerThreadSleepDelay)
+    public Task<TResult> AddWork(TWork work, CancellationToken ct = default, bool first = false)
+    {
+        TaskCompletionSource<TResult> result = new();
+
+        // this action will run earlier
+        if (!first && workCache.TryGetValue(work, out QueueRecord workItem))
         {
-            this.workProcessor = workProcessor;
-            this.threadCount = threadCount;
-            this.name = name;
-            this.logger = logger;
-            this.intraTaskDelay = intraTaskDelay;
-            this.workerThreadSleepDelay = workerThreadSleepDelay;
-
-            SpawnSleepingThread();
+            return workItem.Result.Task;
         }
 
-        public Task<TResult> AddWork(TWork work, CancellationToken ct = default, bool first = false)
+        lock (sync)
         {
-            TaskCompletionSource<TResult> result = new TaskCompletionSource<TResult>();
-
-            // this action will run earlier
-            if (!first && workCache.TryGetValue(work, out QueueRecord workItem))
+            // cancel the duplicate work that'll run later
+            if (first && workCache.TryGetValue(work, out workItem))
             {
-                return workItem.result.Task;
+                workItem.Cts.Cancel();
+
+                // "promote" the task completion source to the front of the queue
+                (result, workItem.Result) = (workItem.Result, result);
             }
 
-            lock (sync)
+            CancellationTokenSource cts = new();
+            ct.Register(() => cts.Cancel());
+
+            QueueRecord item = new(work, result, cts);
+
+            workCache[work] = item;
+
+            if (first)
             {
-                // cancel the duplicate work that'll run later
-                if (first && workCache.TryGetValue(work, out workItem))
-                {
-                    workItem.cts.Cancel();
-
-                    // "promote" the task completion source to the front of the queue
-                    var r = result;
-                    result = workItem.result;
-                    workItem.result = r;
-                }
-
-                CancellationTokenSource cts = new CancellationTokenSource();
-                ct.Register(() => cts.Cancel());
-
-                var item = new QueueRecord
-                {
-                    work = work,
-                    result = result,
-                    cts = cts
-                };
-
-                workCache[work] = item;
-
-                if (first)
-                {
-                    queue.PushLeft(item);
-                }
-                else
-                {
-                    queue.PushRight(item);
-                }
-
-                Monitor.PulseAll(sync);
+                queue.PushLeft(item);
+            }
+            else
+            {
+                queue.PushRight(item);
             }
 
-            return result.Task;
+            Monitor.PulseAll(sync);
         }
 
-        private async Task<bool> HandleWorkItem(QueueRecord rec)
+        return result.Task;
+    }
+
+    private async Task<bool> HandleWorkItem(QueueRecord rec)
+    {
+        try
         {
+            if (rec.Result.Task.IsCompleted)
+            {
+                return false;
+            }
+
+            if (rec.Cts.IsCancellationRequested)
+            {
+                rec.Result.TrySetCanceled(rec.Cts.Token);
+                return false;
+            }
+
             try
             {
-                if (rec.result.Task.IsCompleted)
-                {
-                    return false;
-                }
+                TResult res = await workProcessor(rec.Work, rec.Cts.Token);
 
-                if (rec.cts.IsCancellationRequested)
-                {
-                    rec.result.TrySetCanceled(rec.cts.Token);
-                    return false;
-                }
+                rec.Result.TrySetResult(res);
+            }
+            catch (Exception e)
+            {
+                rec.Result.TrySetException(e);
+            }
 
+            return true;
+        }
+        finally
+        {
+            workCache.TryRemove(rec.Work, out _);
+        }
+    }
+
+    private async void SpawnWorkerTasks()
+    {
+        await SpawnWorkerTasksInternal();
+
+        logger.LogDebug($"{name} worker task pool finished");
+
+        SpawnSleepingThread();
+    }
+
+    private async Task SpawnWorkerTasksInternal()
+    {
+        int parkedThreads = 0;
+        TaskCompletionSource<Unit> allDone = new();
+        CancellationTokenSource cts = new();
+            
+        // todo: this is open to the risk of all but 1 thread finishing when many more items are added to the queue
+        async Task StartWorker()
+        {
+            if (queue.TryPopLeft(out QueueRecord task))
+            {
+                bool taskRan;
                 try
                 {
-                    TResult res = await workProcessor(rec.work, rec.cts.Token);
-
-                    rec.result.TrySetResult(res);
+                    taskRan = await HandleWorkItem(task);
                 }
                 catch (Exception e)
                 {
-                    rec.result.TrySetException(e);
+                    logger.LogWarning(e, $"Error processing task {task.Work}");
+                    taskRan = true;
                 }
 
-                return true;
-            }
-            finally
-            {
-                workCache.TryRemove(rec.work, out _);
-            }
-        }
-
-        private async void SpawnWorkerTasks()
-        {
-            await SpawnWorkerTasksInternal();
-
-            logger.LogDebug($"{name} worker task pool finished");
-
-            SpawnSleepingThread();
-        }
-
-        private async Task SpawnWorkerTasksInternal()
-        {
-            int parkedThreads = 0;
-            TaskCompletionSource<Unit> allDone = new TaskCompletionSource<Unit>();
-            CancellationTokenSource cts = new CancellationTokenSource();
-            
-            // todo: this is open to the risk of all but 1 thread finishing when many more items are added to the queue
-            async Task StartWorker()
-            {
-                if (queue.TryPopLeft(out QueueRecord task))
+                if (taskRan)
                 {
-                    bool taskRan;
                     try
                     {
-                        taskRan = await HandleWorkItem(task);
+                        await Task.Delay(intraTaskDelay, task.Cts.Token);
                     }
-                    catch (Exception e)
-                    {
-                        logger.LogWarning(e, $"Error processing task {task.work}");
-                        taskRan = true;
-                    }
-
-                    if (taskRan)
-                    {
-                        try
-                        {
-                            await Task.Delay(intraTaskDelay, task.cts.Token);
-                        }
-                        catch (TaskCanceledException)
-                        {
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    int totalParkedThreads = Interlocked.Increment(ref parkedThreads);
-                    if (totalParkedThreads == threadCount)
-                    {
-                        allDone.TrySetResult(Unit.Default);
-                        cts.Cancel();
-                        return;
-                    }
-
-                    await Task.WhenAny(
-                        allDone.Task.Map(_ => true),
-                        Task.Delay(workerThreadSleepDelay, cts.Token).MapAll(_ => false)
-                    );
-
-                    if (allDone.Task.IsCompleted)
+                    catch (TaskCanceledException)
                     {
                         return;
                     }
-
-                    Interlocked.Decrement(ref parkedThreads);
                 }
-
-                await Task.Yield();
-                await StartWorker().ConfigureAwait(false);
             }
-
-            async Task DoAllWork()
+            else
             {
-                Task[] workers = new Task[threadCount];
-
-                for (int i = 0; i < workers.Length; i++)
+                int totalParkedThreads = Interlocked.Increment(ref parkedThreads);
+                if (totalParkedThreads == threadCount)
                 {
-                    workers[i] = StartWorker();
+                    allDone.TrySetResult(Unit.Default);
+                    cts.Cancel();
+                    return;
                 }
 
-                foreach (Task worker in workers)
+                await Task.WhenAny(
+                    allDone.Task.Map(_ => true),
+                    Task.Delay(workerThreadSleepDelay, cts.Token).MapAll(_ => false)
+                );
+
+                if (allDone.Task.IsCompleted)
                 {
-                    await worker;
+                    return;
                 }
 
-                allDone.TrySetResult(Unit.Default);
+                Interlocked.Decrement(ref parkedThreads);
             }
 
-            // work starts here
-            await DoAllWork();
+            await Task.Yield();
+            await StartWorker().ConfigureAwait(false);
         }
 
-        private void SpawnSleepingThread()
+        async Task DoAllWork()
         {
-            Thread t = new Thread(SleepingThreadRun);
-            t.Name = $"{name} waiter";
-            t.IsBackground = true;
+            Task[] workers = new Task[threadCount];
 
-            t.Start();
-        }
-
-        private void SleepingThreadRun()
-        {
-            while (true)
+            for (int i = 0; i < workers.Length; i++)
             {
-                lock (sync)
-                {
-                    if (!queue.IsEmpty)
-                    {
-                        SpawnWorkerTasks();
-                        return;
-                    }
+                workers[i] = StartWorker();
+            }
 
-                    Monitor.Wait(sync);
+            foreach (Task worker in workers)
+            {
+                await worker;
+            }
+
+            allDone.TrySetResult(Unit.Default);
+        }
+
+        // work starts here
+        await DoAllWork();
+    }
+
+    private void SpawnSleepingThread()
+    {
+        Thread t = new(SleepingThreadRun)
+        {
+            Name = $"{name} waiter",
+            IsBackground = true
+        };
+
+        t.Start();
+    }
+
+    private void SleepingThreadRun()
+    {
+        while (true)
+        {
+            lock (sync)
+            {
+                if (!queue.IsEmpty)
+                {
+                    SpawnWorkerTasks();
+                    return;
                 }
+
+                Monitor.Wait(sync);
             }
         }
+    }
 
-        private class QueueRecord
-        {
-            public TWork work;
-            public TaskCompletionSource<TResult> result;
-            public CancellationTokenSource cts;
-        }
+    private record QueueRecord(TWork Work, TaskCompletionSource<TResult> Result, CancellationTokenSource Cts)
+    {
+        public TaskCompletionSource<TResult> Result { get; set; } = Result;
     }
 }

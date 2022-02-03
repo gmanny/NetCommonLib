@@ -1,33 +1,32 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public class UnhandledExceptionHandlerSvc
 {
-    public class UnhandledExceptionHandlerSvc
+    private readonly ILogger logger;
+
+    public UnhandledExceptionHandlerSvc(ILogger logger)
     {
-        private readonly ILogger logger;
+        this.logger = logger;
 
-        public UnhandledExceptionHandlerSvc(ILogger logger)
+        AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+    }
+
+    private void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
+    {
+        switch (e.ExceptionObject)
         {
-            this.logger = logger;
+            case Exception err:
+                logger.LogCritical(err, "Unhandled exception");
+                break;
 
-            AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+            default:
+                logger.LogCritical($"Unhandled exception object: {e.ExceptionObject}");
+                break;
         }
-
-        private void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
-        {
-            switch (e.ExceptionObject)
-            {
-                case Exception err:
-                    logger.LogCritical(err, "Unhandled exception");
-                    break;
-
-                default:
-                    logger.LogCritical($"Unhandled exception object: {e.ExceptionObject}");
-                    break;
-            }
             
-            Environment.Exit(1);
-        }
+        Environment.Exit(1);
     }
 }

@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace Monitor.ServiceCommon.Services.InitStage
+namespace Monitor.ServiceCommon.Services.InitStage;
+
+public interface IInitStageService<TResource> : IService
 {
-    public interface IInitStageService<TResource> : IService
-    {
-        Task InitComplete { get; }
-    }
+    Task InitComplete { get; }
 }

@@ -3,70 +3,69 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
-namespace MonitorCommon.Worker
+namespace MonitorCommon.Worker;
+
+public class SimpleThreadQueueProcessor<TTask>
 {
-    public class SimpleThreadQueueProcessor<TTask>
+    private readonly Action<TTask> runTask;
+    private readonly string threadName;
+    private readonly ILogger logger;
+    private readonly Action idleAction;
+
+    private readonly ConcurrentQueue<TTask> taskQueue = new();
+
+    public SimpleThreadQueueProcessor(Action<TTask> runTask, string threadName, ILogger logger, Action idleAction = null)
     {
-        private readonly Action<TTask> runTask;
-        private readonly string threadName;
-        private readonly ILogger logger;
-        private readonly Action idleAction;
+        this.runTask = runTask;
+        this.threadName = threadName;
+        this.logger = logger;
+        this.idleAction = idleAction;
 
-        private readonly ConcurrentQueue<TTask> taskQueue = new ConcurrentQueue<TTask>();
-
-        public SimpleThreadQueueProcessor(Action<TTask> runTask, string threadName, ILogger logger, Action idleAction = null)
+        Thread thread = new(() =>
         {
-            this.runTask = runTask;
-            this.threadName = threadName;
-            this.logger = logger;
-            this.idleAction = idleAction;
-
-            var thread = new Thread(() =>
+            try
             {
-                try
-                {
-                    WorkerProc();
-                }
-                catch (Exception e)
-                {
-                    logger.LogWarning(e, $"Queue processor {threadName} loop failed");
-                }
-            })
+                WorkerProc();
+            }
+            catch (Exception e)
             {
-                Name = threadName,
-                IsBackground = true
-            };
+                logger.LogWarning(e, $"Queue processor {threadName} loop failed");
+            }
+        })
+        {
+            Name = threadName,
+            IsBackground = true
+        };
 
-            thread.Start();
-        }
+        thread.Start();
+    }
         
-        public ConcurrentQueue<TTask> TaskQueue => taskQueue;
+    public ConcurrentQueue<TTask> TaskQueue => taskQueue;
 
-        public void Post(TTask task) => taskQueue.Enqueue(task);
+    public void Post(TTask task) => taskQueue.Enqueue(task);
 
-        private void WorkerProc()
+    private void WorkerProc()
+    {
+        SpinWait sw = new();
+
+        do
         {
-            SpinWait sw = new SpinWait();
-
-            do
+            TTask task;
+            while (!taskQueue.TryDequeue(out task))
             {
-                TTask task;
-                while (!taskQueue.TryDequeue(out task))
-                {
-                    sw.SpinOnce();
+                sw.SpinOnce();
 
-                    idleAction?.Invoke();
-                }
+                idleAction?.Invoke();
+            }
 
-                try
-                {
-                    runTask(task);
-                }
-                catch (Exception e)
-                {
-                    logger.LogError(e, $"Task {task} from {threadName} finished with exception");
-                }
-            } while (true);
-        }
+            try
+            {
+                runTask(task);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Task {task} from {threadName} finished with exception");
+            }
+        } while (true);
     }
 }

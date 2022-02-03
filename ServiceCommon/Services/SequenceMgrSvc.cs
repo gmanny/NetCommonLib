@@ -5,26 +5,25 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MonitorCommon;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public class SequenceMgrSvc
 {
-    public class SequenceMgrSvc
+    private readonly ConcurrentDictionary<string, AsyncSequentializer> sequences = new();
+
+    public SequenceMgrSvc(IConfiguration config, ILogger logger)
     {
-        private readonly ConcurrentDictionary<string, AsyncSequentializer> sequences = new ConcurrentDictionary<string, AsyncSequentializer>();
+        IConfigurationSection svcConf = config.GetSection("action-sequences").GetSection("sequences");
 
-        public SequenceMgrSvc(IConfiguration config, ILogger logger)
+        foreach (IConfigurationSection section in svcConf.GetChildren())
         {
-            var svcConf = config.GetSection("action-sequences").GetSection("sequences");
-
-            foreach (IConfigurationSection section in svcConf.GetChildren())
+            TimeSpan delay = section.Get<TimeSpan>();
+            if (!sequences.TryAdd(section.Key, new AsyncSequentializer(delay)))
             {
-                TimeSpan delay = section.Get<TimeSpan>();
-                if (!sequences.TryAdd(section.Key, new AsyncSequentializer(delay)))
-                {
-                    logger.LogWarning($"Couldn't add sequentializer `{section.Key}` because such name already exist (delay = {delay})");
-                }
+                logger.LogWarning($"Couldn't add sequentializer `{section.Key}` because such name already exist (delay = {delay})");
             }
         }
-
-        public IReadOnlyDictionary<string, AsyncSequentializer> Sequences => sequences;
     }
+
+    public IReadOnlyDictionary<string, AsyncSequentializer> Sequences => sequences;
 }

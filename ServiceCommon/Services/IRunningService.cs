@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public interface IRunningService : IService
 {
-    public interface IRunningService : IService
-    {
-        Task Finished { get; }
-    }
+    Task Finished { get; }
 }

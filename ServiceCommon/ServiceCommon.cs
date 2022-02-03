@@ -11,81 +11,80 @@ using Ninject;
 using Ninject.Modules;
 using Ninject.Planning.Bindings.Resolvers;
 
-namespace Monitor.ServiceCommon
+namespace Monitor.ServiceCommon;
+
+public static class ServiceCommon
 {
-    public static class ServiceCommon
+    public static IKernel CreateCommonService(CommonServiceConfig cfg)
     {
-        public static IKernel CreateCommonService(CommonServiceConfig cfg)
-        {
-            var mods = new INinjectModule[cfg.AdditionalModules.Length + 1];
-            mods[0] = new ServiceCommonModule(cfg);
-            cfg.AdditionalModules.CopyTo(mods, 1);
+        INinjectModule[] mods = new INinjectModule[cfg.AdditionalModules.Length + 1];
+        mods[0] = new ServiceCommonModule(cfg);
+        cfg.AdditionalModules.CopyTo(mods, 1);
 
-            var kernel = new StandardKernel(mods);
-            kernel.Components.Remove<IMissingBindingResolver, SelfBindingResolver>();
+        StandardKernel kernel = new(mods);
+        kernel.Components.Remove<IMissingBindingResolver, SelfBindingResolver>();
 
-            return kernel;
-        }
+        return kernel;
+    }
 
-        public static IKernel StartCommonService(CommonServiceConfig cfg)
-        {
-            Thread.CurrentThread.Name = "Main";
+    public static IKernel StartCommonService(CommonServiceConfig cfg)
+    {
+        Thread.CurrentThread.Name = "Main";
 
-            var kernel = CreateCommonService(cfg);
+        IKernel kernel = CreateCommonService(cfg);
 
-            // eager singletons here
-            kernel.Get<EagerSingletonSvc>();
+        // eager singletons here
+        kernel.Get<EagerSingletonSvc>();
             
-            return kernel;
-        }
+        return kernel;
+    }
 
-        public static async Task<IKernel> RunCommonService(Type program, CommonServiceConfig cfg, params Type[] services)
+    public static async Task<IKernel> RunCommonService(Type program, CommonServiceConfig cfg, params Type[] services)
+    {
+        try
         {
-            try
-            {
-                IKernel container = StartCommonService(cfg);
+            IKernel container = StartCommonService(cfg);
 
-                var logger = container.CreateLogger(program);
+            ILogger logger = container.CreateLogger(program);
 
-                Task<string[]> complete = container.StartServices(services);
+            Task<string[]> complete = container.StartServices(services);
                 
-                PaInitSvc initSvc = container.Get<PaInitSvc>();
-                initSvc.AllDone();
+            PaInitSvc initSvc = container.Get<PaInitSvc>();
+            initSvc.AllDone();
 
-                string[] svcNames = await complete;
+            string[] svcNames = await complete;
 
-                logger.LogInformation($"All services finished work: {String.Join(", ", svcNames)}");
+            logger.LogInformation($"All services finished work: {String.Join(", ", svcNames)}");
 
-                return container;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error running service: {e}");
-
-                throw;
-            }
+            return container;
         }
-
-        public static ILogger CreateLogger(this IKernel kernel, Type type)
+        catch (Exception e)
         {
-            return kernel.Get<LoggingSvc>().Factory.CreateLogger(type);
-        }
+            Console.WriteLine($"Error running service: {e}");
 
-        public static async Task<string[]> StartServices(this IKernel kernel, params Type[] services)
+            throw;
+        }
+    }
+
+    public static ILogger CreateLogger(this IKernel kernel, Type type)
+    {
+        return kernel.Get<LoggingSvc>().Factory.CreateLogger(type);
+    }
+
+    public static async Task<string[]> StartServices(this IKernel kernel, params Type[] services)
+    {
+        foreach (Type service in services)
         {
-            foreach (Type service in services)
+            kernel.Bind(service).ToSelf().InSingletonScope();
+
+            if (typeof(IRunningService).IsAssignableFrom(service))
             {
-                kernel.Bind(service).ToSelf().InSingletonScope();
-
-                if (typeof(IRunningService).IsAssignableFrom(service))
-                {
-                    kernel.Bind<IRunningService>().To(service);
-                }
+                kernel.Bind<IRunningService>().To(service);
             }
-
-            return await Task.WhenAll(
-                kernel.GetAll<IRunningService>().Select(s => s.Finished.Map(() => s.GetType().Name)).ToArray()
-            );
         }
+
+        return await Task.WhenAll(
+            kernel.GetAll<IRunningService>().Select(s => s.Finished.Map(() => s.GetType().Name)).ToArray()
+        );
     }
 }

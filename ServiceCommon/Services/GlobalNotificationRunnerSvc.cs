@@ -2,21 +2,20 @@
 using Microsoft.Extensions.Logging;
 using MonitorCommon.Threading;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public class GlobalNotificationRunnerSvc
 {
-    public class GlobalNotificationRunnerSvc
+    private readonly NotificationRunner runner;
+
+    public GlobalNotificationRunnerSvc(ILogger logger)
     {
-        private readonly NotificationRunner runner;
-
-        public GlobalNotificationRunnerSvc(ILogger logger)
+        runner = new NotificationRunner("Global notif", logger);
+        if (!runner.TryStart())
         {
-            runner = new NotificationRunner("Global notif", logger);
-            if (!runner.TryStart())
-            {
-                throw new Exception("Couldn't start runner");
-            }
+            throw new Exception("Couldn't start runner");
         }
-
-        public NotificationRunner Runner => runner;
     }
+
+    public NotificationRunner Runner => runner;
 }

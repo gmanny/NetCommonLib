@@ -1,8 +1,7 @@
-﻿namespace MonitorCommon.Worker
+﻿namespace MonitorCommon.Worker;
+
+public class DummyCadenceState : ICadenceExecutionState
 {
-    public class DummyCadenceState : ICadenceExecutionState
-    {
-        public void Started() { }
-        public void Done() { }
-    }
+    public void Started() { }
+    public void Done() { }
 }

@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace MonitorCommon
+namespace MonitorCommon;
+
+public static class DateTimeUtil
 {
-    public static class DateTimeUtil
-    {
-        public static DateTime Min(DateTime a, DateTime b) => a < b ? a : b;
-    }
+    public static DateTime Min(DateTime a, DateTime b) => a < b ? a : b;
 }

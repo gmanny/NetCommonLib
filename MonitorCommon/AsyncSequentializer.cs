@@ -4,59 +4,54 @@ using System.Threading.Tasks;
 using LanguageExt;
 using MonitorCommon.Tasks;
 
-namespace MonitorCommon
+namespace MonitorCommon;
+
+public class AsyncSequentializer
 {
-    public class AsyncSequentializer
+    private record TaskContainer(Task WithoutDelay, Task WithDelay);
+
+    private readonly TimeSpan delay; // between tasks
+
+    private TaskContainer tail;
+
+    public AsyncSequentializer(TimeSpan delay = default)
     {
-        private class TaskContainer
+        this.delay = delay;
+    }
+
+    public async Task<T> NextAction<T>(Func<Task<T>> work, bool noDelay = false)
+    {
+        TaskCompletionSource<T> next = new TaskCompletionSource<T>();
+        Task<T> ret = next.Task;
+        TaskContainer ntx = new(ret, delay.Ticks > 0 ? ret.FlatMapAll(_ => Task.Delay(delay).ToUnit()) : ret.ToUnit());
+
+        TaskContainer p = Interlocked.Exchange(ref tail, ntx);
+        if (p != null)
         {
-            public Task withDelay;
-            public Task withoutDelay;
-        }
-
-        private readonly TimeSpan delay; // between tasks
-
-        private TaskContainer tail;
-
-        public AsyncSequentializer(TimeSpan delay = default)
-        {
-            this.delay = delay;
-        }
-
-        public async Task<T> NextAction<T>(Func<Task<T>> work, bool noDelay = false)
-        {
-            TaskCompletionSource<T> next = new TaskCompletionSource<T>();
-            Task<T> ret = next.Task;
-            TaskContainer ntx = new TaskContainer { withoutDelay = ret, withDelay = delay.Ticks > 0 ? ret.FlatMapAll(_ => Task.Delay(delay).ToUnit()) : ret.ToUnit() };
-
-            TaskContainer p = Interlocked.Exchange(ref tail, ntx);
-            if (p != null)
-            {
-                Task prev = noDelay ? p.withoutDelay : p.withDelay;
-                try
-                {
-                    await prev;
-                }
-                catch
-                {
-                    // ignored
-                }
-            }
-
+            Task prev = noDelay ? p.WithoutDelay : p.WithDelay;
             try
             {
-                T res = await work();
-
-                next.TrySetResult(res);
-
-                return res;
+                await prev;
             }
-            catch (Exception e)
+            catch
             {
-                next.TrySetException(e);
-
-                throw;
+                // ignored
             }
+        }
+
+        try
+        {
+            T res = await work();
+
+            next.TrySetResult(res);
+
+            return res;
+        }
+        catch (Exception e)
+        {
+            next.TrySetException(e);
+
+            throw;
         }
     }
 }

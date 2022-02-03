@@ -1,10 +1,9 @@
 ﻿using System.IO;
 using System.Reflection;
 
-namespace MonitorCommon
+namespace MonitorCommon;
+
+public static class FileUtil
 {
-    public static class FileUtil
-    {
-        public static string AppDir() => Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase);
-    }
+    public static string AppDir() => Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase);
 }

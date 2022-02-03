@@ -2,57 +2,56 @@
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public class LoggingSvc
 {
-    public class LoggingSvc
+    public ILoggerFactory Factory { get; } = new LoggerFactory();
+
+    public LoggingSvc(ProcessLifetimeSvc lifetime /* this dependency is to let lifetimeSvc register to app exit events before NLog */)
     {
-        public ILoggerFactory Factory { get; } = new LoggerFactory();
-
-        public LoggingSvc(ProcessLifetimeSvc lifetime /* this dependency is to let lifetimeSvc register to app exit events before NLog */)
+        try
         {
-            try
-            {
-                Console.OutputEncoding = System.Text.Encoding.UTF8;
-            }
-            catch
-            {
-                // ignored
-                // occurs when there's no console
-            }
-
-            NLog.LogManager.LoadConfiguration("conf/nlog.config");
-            Factory.AddNLog();
-
-            lifetime.SetLogger(Factory.CreateLogger(lifetime.GetType()));
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+        }
+        catch
+        {
+            // ignored
+            // occurs when there's no console
         }
 
-        public ILoggerProvider MakeProvider() => new LoggerProvider(Factory);
+        NLog.LogManager.LoadConfiguration("conf/nlog.config");
+        Factory.AddNLog();
+
+        lifetime.SetLogger(Factory.CreateLogger(lifetime.GetType()));
     }
+
+    public ILoggerProvider MakeProvider() => new LoggerProvider(Factory);
+}
     
-    public class LoggerProvider : ILoggerProvider
+public class LoggerProvider : ILoggerProvider
+{
+    private readonly ILoggerFactory factory;
+
+    private bool disposed;
+
+    public LoggerProvider(ILoggerFactory factory)
     {
-        private readonly ILoggerFactory factory;
+        this.factory = factory;
+    }
 
-        private bool disposed;
+    public void Dispose()
+    {
+        disposed = true;
+    }
 
-        public LoggerProvider(ILoggerFactory factory)
+    public ILogger CreateLogger(string categoryName)
+    {
+        if (disposed)
         {
-            this.factory = factory;
+            throw new ObjectDisposedException(nameof(LoggerProvider));
         }
 
-        public void Dispose()
-        {
-            disposed = true;
-        }
-
-        public ILogger CreateLogger(string categoryName)
-        {
-            if (disposed)
-            {
-                throw new ObjectDisposedException(nameof(LoggerProvider));
-            }
-
-            return factory.CreateLogger(categoryName);
-        }
+        return factory.CreateLogger(categoryName);
     }
 }

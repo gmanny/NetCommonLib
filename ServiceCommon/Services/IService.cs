@@ -1,7 +1,6 @@
-﻿namespace Monitor.ServiceCommon.Services
+﻿namespace Monitor.ServiceCommon.Services;
+
+public interface IService
 {
-    public interface IService
-    {
-        string ServiceId { get; }
-    }
+    string ServiceId { get; }
 }

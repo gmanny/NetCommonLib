@@ -5,32 +5,31 @@ using Monitor.ServiceCommon.Services.DiEager;
 using MonitorCommon.Tasks;
 using Ninject.Modules;
 
-namespace Monitor.ServiceCommon.Services.InitStage
+namespace Monitor.ServiceCommon.Services.InitStage;
+
+public class InitSignal<TResource>
 {
-    public class InitSignal<TResource>
+    private readonly ILogger logger;
+
+    private TaskCompletionSource<Unit> allInited = new();
+
+    public InitSignal(ILogger logger)
     {
-        private readonly ILogger logger;
+        this.logger = logger;
+    }
 
-        private TaskCompletionSource<Unit> allInited = new TaskCompletionSource<Unit>();
+    public Task AllInited => allInited.Task;
 
-        public InitSignal(ILogger logger)
-        {
-            this.logger = logger;
-        }
+    public void SignalTotalCompletion(ITaskResult<Unit> result)
+    {
+        allInited.Complete(result);
 
-        public Task AllInited => allInited.Task;
+        logger.LogTrace($"Signaling init completion for {typeof(TResource).Name}");
+    }
 
-        public void SignalTotalCompletion(ITaskResult<Unit> result)
-        {
-            allInited.Complete(result);
-
-            logger.LogTrace($"Signaling init completion for {typeof(TResource).Name}");
-        }
-
-        public static void Bind(NinjectModule module)
-        {
-            module.Bind<InitSignal<TResource>>().ToSelf().InSingletonScope();
-            module.Bind<InitServiceHub<TResource>>().ToSelf().AsEagerSingleton();
-        }
+    public static void Bind(NinjectModule module)
+    {
+        module.Bind<InitSignal<TResource>>().ToSelf().InSingletonScope();
+        module.Bind<InitServiceHub<TResource>>().ToSelf().AsEagerSingleton();
     }
 }

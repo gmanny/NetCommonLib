@@ -3,49 +3,45 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 
-namespace WpfAppCommon.CollectionSegmenting.SubHelpers
+namespace WpfAppCommon.CollectionSegmenting.SubHelpers;
+
+/// <summary>
+/// Helper object that calls three supplied delegates when one of three collection actions occurs.
+/// </summary>
+/// <typeparam name="TItem">type of the collection item</typeparam>
+public class DelegateCollectionSubscriptionHelper<TItem> : AbstractCollectionSubscriptionHelper<TItem>
 {
-    /// <summary>
-    /// Helper object that calls three supplied delegates when one of three collection actions occurs.
-    /// </summary>
-    /// <typeparam name="TItem">type of the collection item</typeparam>
-    public class DelegateCollectionSubscriptionHelper<TItem> : AbstractCollectionSubscriptionHelper<TItem>
+    private readonly ItemAdditionHandler<TItem> additionHandler;
+    private readonly ItemRemovalHandler<TItem> removalHandler;
+    private readonly ItemMoveHandler<TItem> moveHandler;
+
+    public DelegateCollectionSubscriptionHelper([NotNull] IList<TItem> collection, [NotNull] INotifyCollectionChanged notifier, [NotNull] ItemAdditionHandler<TItem> additionHandler,
+        [NotNull] ItemRemovalHandler<TItem> removalHandler, ItemMoveHandler<TItem> moveHandler = null, bool collectionOwnerMode = true) 
+        : base(collection, notifier, collectionOwnerMode)
     {
-        private readonly ItemAdditionHandler<TItem> additionHandler;
-        private readonly ItemRemovalHandler<TItem> removalHandler;
-        private readonly ItemMoveHandler<TItem> moveHandler;
+        ArgumentNullException.ThrowIfNull(additionHandler);
+        ArgumentNullException.ThrowIfNull(removalHandler);
 
-        public DelegateCollectionSubscriptionHelper([NotNull] IList<TItem> collection, [NotNull] INotifyCollectionChanged notifier, [NotNull] ItemAdditionHandler<TItem> additionHandler,
-                                                    [NotNull] ItemRemovalHandler<TItem> removalHandler, ItemMoveHandler<TItem> moveHandler = null, bool collectionOwnerMode = true) 
-            : base(collection, notifier, collectionOwnerMode)
-        {
-            if (additionHandler == null) throw new ArgumentNullException("additionHandler");
-            if (removalHandler == null) throw new ArgumentNullException("removalHandler");
+        this.additionHandler = additionHandler;
+        this.removalHandler = removalHandler;
+        this.moveHandler = moveHandler;
 
-            this.additionHandler = additionHandler;
-            this.removalHandler = removalHandler;
-            this.moveHandler = moveHandler;
+        Start();
+    }
 
-            Start();
-        }
+    protected override void OnItemAdded(TItem item, int index)
+    {
+        additionHandler(item, index);
+    }
 
-        protected override void OnItemAdded(TItem item, int index)
-        {
-            additionHandler(item, index);
-        }
+    // if oldIndex == - 1 - collection Clear was invoked
+    protected override void OnItemRemoved(TItem item, int oldIndex)
+    {
+        removalHandler(item, oldIndex);
+    }
 
-        // if oldIndex == - 1 - collection Clear was invoked
-        protected override void OnItemRemoved(TItem item, int oldIndex)
-        {
-            removalHandler(item, oldIndex);
-        }
-
-        protected override void OnItemMoved(TItem item, int oldIndex, int newIndex)
-        {
-            if (moveHandler != null)
-            {
-                moveHandler(item, oldIndex, newIndex);
-            }
-        }
+    protected override void OnItemMoved(TItem item, int oldIndex, int newIndex)
+    {
+        moveHandler?.Invoke(item, oldIndex, newIndex);
     }
 }

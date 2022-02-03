@@ -1,7 +1,6 @@
-﻿namespace Monitor.ServiceCommon.Services.DiRouter
+﻿namespace Monitor.ServiceCommon.Services.DiRouter;
+
+public interface IDiNamedInstance<K>
 {
-    public interface IDiNamedInstance<K>
-    {
-        K DiName { get; }
-    }
+    K DiName { get; }
 }

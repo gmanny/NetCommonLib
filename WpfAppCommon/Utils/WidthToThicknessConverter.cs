@@ -3,71 +3,70 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace WpfAppCommon.Utils
+namespace WpfAppCommon.Utils;
+
+public enum ThicknessSide { Left, Top, Right, Bottom, LeftRight, TopBottom, All }
+
+public class WidthToThicknessConverter : IValueConverter
 {
-    public enum ThicknessSide { Left, Top, Right, Bottom, LeftRight, TopBottom, All }
+    private ThicknessSide side;
+    private bool invert;
+    private double divide = 1;
 
-    public class WidthToThicknessConverter : IValueConverter
+    public WidthToThicknessConverter() { }
+
+    public WidthToThicknessConverter(ThicknessSide side)
     {
-        private ThicknessSide side;
-        private bool invert;
-        private double divide = 1;
+        this.side = side;
+    }
 
-        public WidthToThicknessConverter() { }
+    public ThicknessSide Side
+    {
+        get => side;
+        set => side = value;
+    }
 
-        public WidthToThicknessConverter(ThicknessSide side)
+    public bool Invert
+    {
+        get => invert;
+        set => invert = value;
+    }
+
+    public double Divide
+    {
+        get => divide;
+        set => divide = value;
+    }
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not double width || !Double.IsFinite(width))
         {
-            this.side = side;
+            return new Thickness(0);
         }
 
-        public ThicknessSide Side
+        width /= divide;
+
+        if (invert)
         {
-            get => side;
-            set => side = value;
+            width = -width;
         }
 
-        public bool Invert
+        return side switch
         {
-            get => invert;
-            set => invert = value;
-        }
+            ThicknessSide.Left => new Thickness(width, 0, 0, 0),
+            ThicknessSide.Top => new Thickness(0, width, 0, 0),
+            ThicknessSide.Right => new Thickness(0, 0, width, 0),
+            ThicknessSide.Bottom => new Thickness(0, 0, 0, width),
+            ThicknessSide.LeftRight => new Thickness(width, 0, width, 0),
+            ThicknessSide.TopBottom => new Thickness(0, width, 0, width),
+            ThicknessSide.All => new Thickness(width, width, width, width),
+            _ => throw new ArgumentOutOfRangeException(nameof(side), side, "Side not recognized")
+        };
+    }
 
-        public double Divide
-        {
-            get => divide;
-            set => divide = value;
-        }
-
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (!(value is double width) || !Double.IsFinite(width))
-            {
-                return new Thickness(0);
-            }
-
-            width /= divide;
-
-            if (invert)
-            {
-                width = -width;
-            }
-
-            return side switch
-            {
-                ThicknessSide.Left => new Thickness(width, 0, 0, 0),
-                ThicknessSide.Top => new Thickness(0, width, 0, 0),
-                ThicknessSide.Right => new Thickness(0, 0, width, 0),
-                ThicknessSide.Bottom => new Thickness(0, 0, 0, width),
-                ThicknessSide.LeftRight => new Thickness(width, 0, width, 0),
-                ThicknessSide.TopBottom => new Thickness(0, width, 0, width),
-                ThicknessSide.All => new Thickness(width, width, width, width),
-                _ => throw new ArgumentOutOfRangeException(nameof(side), side, "Side not recognized")
-            };
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
     }
 }

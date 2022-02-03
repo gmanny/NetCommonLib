@@ -2,40 +2,41 @@
 using System.Threading;
 using NConsoleMenu;
 
-namespace Monitor.ServiceCommon.Services
+namespace Monitor.ServiceCommon.Services;
+
+public class ConsoleCommandService
 {
-    public class ConsoleCommandService
+    private readonly CMenu menu;
+
+    public ConsoleCommandService()
     {
-        private readonly CMenu menu;
+        menu = new CMenu();
 
-        public ConsoleCommandService()
+        menu.OnQuit += OnMenuQuit;
+
+        StartThread();
+    }
+
+    public void AddCommand(string command, Action<string> action, string help = null)
+    {
+        lock (menu)
         {
-            menu = new CMenu();
-
-            menu.OnQuit += OnMenuQuit;
-
-            StartThread();
+            menu.Add(command, action, help);
         }
+    }
 
-        public void AddCommand(string command, Action<string> action, string help = null)
+    private void StartThread()
+    {
+        Thread t = new(() => menu.Run())
         {
-            lock (menu)
-            {
-                menu.Add(command, action, help);
-            }
-        }
+            Name = "Console command processor",
+            IsBackground = true
+        };
+        t.Start();
+    }
 
-        private void StartThread()
-        {
-            var t = new Thread(() => menu.Run());
-            t.Name = "Console command processor";
-            t.IsBackground = true;
-            t.Start();
-        }
-
-        private void OnMenuQuit(CMenu obj)
-        {
-            Environment.Exit(0);
-        }
+    private void OnMenuQuit(CMenu obj)
+    {
+        Environment.Exit(0);
     }
 }

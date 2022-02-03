@@ -8,93 +8,92 @@ using Monitor.ServiceCommon.Util;
 using MonitorCommon;
 using Ninject.Modules;
 
-namespace Monitor.ServiceCommon.Services.InitStage.PostActivated
+namespace Monitor.ServiceCommon.Services.InitStage.PostActivated;
+
+public class PaInitStage<TResource>
 {
-    public class PaInitStage<TResource>
+    private readonly TaskCompletionSource<Unit> stageDone = new();
+
+    public PaInitStage(PaInitSignal<TResource> signal, ILogger logger)
     {
-        private readonly TaskCompletionSource<Unit> stageDone = new TaskCompletionSource<Unit>();
-
-        public PaInitStage(PaInitSignal<TResource> signal, ILogger logger)
+        if (!signal.Register(stageDone.Task))
         {
-            if (!signal.Register(stageDone.Task))
-            {
-                logger.LogWarning($"Init stage for {typeof(TResource).Name} was registered too late");
-            }
-        }
-
-        public void StageDone()
-        {
-            stageDone.TrySetResult(Unit.Default);
+            logger.LogWarning($"Init stage for {typeof(TResource).Name} was registered too late");
         }
     }
 
-    public interface IPaInitSignal
+    public void StageDone()
     {
-        void ActivationDone();
+        stageDone.TrySetResult(Unit.Default);
+    }
+}
+
+public interface IPaInitSignal
+{
+    void ActivationDone();
+}
+
+public class PaInitSignal<TResource> : IPaInitSignal
+{
+    private readonly ILogger logger;
+
+    private readonly List<Task> allStages = new();
+    private volatile bool isDone;
+
+    private readonly TaskCompletionSource<Unit> allDone = new();
+
+    public PaInitSignal(ILogger logger)
+    {
+        this.logger = logger;
     }
 
-    public class PaInitSignal<TResource> : IPaInitSignal
+    public Task AllInited => allDone.Task;
+
+    public bool Register(Task stageDoneTask)
     {
-        private readonly ILogger logger;
+        allStages.Add(stageDoneTask);
 
-        private readonly List<Task> allStages = new List<Task>();
-        private volatile bool isDone;
-
-        private readonly TaskCompletionSource<Unit> allDone = new TaskCompletionSource<Unit>();
-
-        public PaInitSignal(ILogger logger)
-        {
-            this.logger = logger;
-        }
-
-        public Task AllInited => allDone.Task;
-
-        public bool Register(Task stageDoneTask)
-        {
-            allStages.Add(stageDoneTask);
-
-            return !isDone;
-        }
-
-        public static void Bind(NinjectModule module)
-        {
-            module.Bind<PaInitStage<TResource>>().ToSelf();
-            module.Bind<PaInitSignal<TResource>>().ToSelf().AsEagerSingleton();
-            module.Bind<IPaInitSignal>().ToExisting().Singleton<PaInitSignal<TResource>>();
-        }
-
-        public async void ActivationDone()
-        {
-            isDone = true;
-
-            logger.LogTrace($"Init signal for {typeof(TResource).Name} created with {allStages.Count} stages");
-
-            if (allStages.NonEmpty())
-            {
-                await Task.WhenAll(allStages);
-            }
-
-            logger.LogTrace($"Init signal for {typeof(TResource).Name} finished with {allStages.Count} stages");
-
-            allDone.TrySetResult(Unit.Default);
-        }
+        return !isDone;
     }
 
-    public class PaInitSvc
+    public static void Bind(NinjectModule module)
     {
-        private readonly List<IPaInitSignal> allSignals;
+        module.Bind<PaInitStage<TResource>>().ToSelf();
+        module.Bind<PaInitSignal<TResource>>().ToSelf().AsEagerSingleton();
+        module.Bind<IPaInitSignal>().ToExisting().Singleton<PaInitSignal<TResource>>();
+    }
 
-        public PaInitSvc(IEnumerable<IPaInitSignal> allSignals)
+    public async void ActivationDone()
+    {
+        isDone = true;
+
+        logger.LogTrace($"Init signal for {typeof(TResource).Name} created with {allStages.Count} stages");
+
+        if (allStages.NonEmpty())
         {
-            this.allSignals = allSignals.ToList();
+            await Task.WhenAll(allStages);
         }
 
-        public void AllDone()
+        logger.LogTrace($"Init signal for {typeof(TResource).Name} finished with {allStages.Count} stages");
+
+        allDone.TrySetResult(Unit.Default);
+    }
+}
+
+public class PaInitSvc
+{
+    private readonly List<IPaInitSignal> allSignals;
+
+    public PaInitSvc(IEnumerable<IPaInitSignal> allSignals)
+    {
+        this.allSignals = allSignals.ToList();
+    }
+
+    public void AllDone()
+    {
+        foreach (IPaInitSignal signal in allSignals)
         {
-            foreach (IPaInitSignal signal in allSignals)
-            {
-                signal.ActivationDone();
-            }
+            signal.ActivationDone();
         }
     }
 }

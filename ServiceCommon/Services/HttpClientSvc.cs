@@ -2,18 +2,17 @@
 using System.Net.Http;
 using Ninject.Activation;
 
-namespace Monitor.ServiceCommon.Services
-{
-    public class HttpClientSvc : Provider<HttpClient>
-    {
-        public HttpClient HttpClient { get; } = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(10)
-        };
+namespace Monitor.ServiceCommon.Services;
 
-        protected override HttpClient CreateInstance(IContext context)
-        {
-            return HttpClient;
-        }
+public class HttpClientSvc : Provider<HttpClient>
+{
+    public HttpClient HttpClient { get; } = new()
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
+
+    protected override HttpClient CreateInstance(IContext context)
+    {
+        return HttpClient;
     }
 }

@@ -4,75 +4,74 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
-namespace MonitorCommon.Configuration
+namespace MonitorCommon.Configuration;
+
+public class FallbackConfiguration : IConfiguration
 {
-    public class FallbackConfiguration : IConfiguration
+    private readonly IConfiguration[] layers;
+
+    public FallbackConfiguration(params IConfiguration[] layers)
     {
-        private readonly IConfiguration[] layers;
-
-        public FallbackConfiguration(params IConfiguration[] layers)
+        if (layers.IsEmpty())
         {
-            if (layers.IsEmpty())
+            throw new ArgumentException("Can't have zero layers", nameof(layers));
+        }
+
+        this.layers = layers;
+    }
+
+    public IConfigurationSection GetSection(string key)
+    {
+        IConfigurationSection[] sections = layers.Select(x => x.GetSection(key)).ToArray();
+
+        return new FallbackConfigurationSection(sections);
+    }
+
+    public IEnumerable<IConfigurationSection> GetChildren()
+    {
+        HashSet<string> keys = new();
+        Dictionary<(string key, IConfiguration layer), IConfigurationSection> index = new();
+
+        foreach (IConfiguration layer in layers)
+        {
+            foreach (IConfigurationSection child in layer.GetChildren())
             {
-                throw new ArgumentException("Can't have zero layers", nameof(layers));
+                keys.Add(child.Key);
+
+                index.Add((child.Key, layer), child);
             }
-
-            this.layers = layers;
         }
 
-        public IConfigurationSection GetSection(string key)
+        foreach (string key in keys)
         {
-            IConfigurationSection[] sections = layers.Select(x => x.GetSection(key)).ToArray();
-
-            return new FallbackConfigurationSection(sections);
+            yield return new FallbackConfigurationSection(
+                layers.Select(l => index.GetOrElse((key, l), () => l.GetSection(key))).ToArray()
+            );
         }
+    }
 
-        public IEnumerable<IConfigurationSection> GetChildren()
+    public IChangeToken GetReloadToken()
+    {
+        return new CompositeChangeToken(layers.Select(x => x.GetReloadToken()).ToList());
+    }
+
+    public string this[string key]
+    {
+        get
         {
-            ISet<string> keys = new HashSet<string>();
-            IDictionary<(string key, IConfiguration layer), IConfigurationSection> index = new Dictionary<(string key, IConfiguration layer), IConfigurationSection>();
-
             foreach (IConfiguration layer in layers)
             {
-                foreach (IConfigurationSection child in layer.GetChildren())
-                {
-                    keys.Add(child.Key);
+                string current = layer[key];
 
-                    index.Add((child.Key, layer), child);
+                if (current != null)
+                {
+                    return current;
                 }
             }
 
-            foreach (string key in keys)
-            {
-                yield return new FallbackConfigurationSection(
-                    layers.Select(l => index.GetOrElse((key, l), () => l.GetSection(key))).ToArray()
-                );
-            }
+            return null;
         }
 
-        public IChangeToken GetReloadToken()
-        {
-            return new CompositeChangeToken(layers.Select(x => x.GetReloadToken()).ToList());
-        }
-
-        public string this[string key]
-        {
-            get
-            {
-                foreach (IConfiguration layer in layers)
-                {
-                    string current = layer[key];
-
-                    if (current != null)
-                    {
-                        return current;
-                    }
-                }
-
-                return null;
-            }
-
-            set => layers[0][key] = value;
-        }
+        set => layers[0][key] = value;
     }
 }

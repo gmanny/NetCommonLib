@@ -1,16 +1,7 @@
 ﻿using System;
 
-namespace MonitorCommon.Caches
-{
-    public class TimeBox<T>
-    {
-        public readonly DateTime time;
-        public readonly T value;
+namespace MonitorCommon.Caches;
 
-        public TimeBox(DateTime time, T value)
-        {
-            this.time = time;
-            this.value = value;
-        }
-    }
-}
+// ReSharper disable InconsistentNaming
+public record TimeBox<T>(DateTime time, T value);
+// ReSharper restore InconsistentNaming

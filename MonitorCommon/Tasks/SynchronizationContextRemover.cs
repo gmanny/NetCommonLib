@@ -2,32 +2,31 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace MonitorCommon.Tasks
+namespace MonitorCommon.Tasks;
+
+// from https://putridparrot.com/blog/replacing-multiple-configureawait-with-the-synchronizationcontextremover/
+public struct SynchronizationContextRemover : INotifyCompletion
 {
-    // from https://putridparrot.com/blog/replacing-multiple-configureawait-with-the-synchronizationcontextremover/
-    public struct SynchronizationContextRemover : INotifyCompletion
+    public bool IsCompleted => SynchronizationContext.Current == null;
+
+    public void OnCompleted(Action continuation)
     {
-        public bool IsCompleted => SynchronizationContext.Current == null;
-
-        public void OnCompleted(Action continuation)
+        SynchronizationContext prevContext = SynchronizationContext.Current;
+        try
         {
-            var prevContext = SynchronizationContext.Current;
-            try
-            {
-                SynchronizationContext.SetSynchronizationContext(null);
-                continuation();
-            }
-            finally
-            {
-                SynchronizationContext.SetSynchronizationContext(prevContext);
-            }
+            SynchronizationContext.SetSynchronizationContext(null);
+            continuation();
         }
-
-        public SynchronizationContextRemover GetAwaiter()
+        finally
         {
-            return this;
+            SynchronizationContext.SetSynchronizationContext(prevContext);
         }
-
-        public void GetResult() { }
     }
+
+    public SynchronizationContextRemover GetAwaiter()
+    {
+        return this;
+    }
+
+    public void GetResult() { }
 }

@@ -1,25 +1,21 @@
 ﻿using System;
 using System.Threading;
 
-namespace MonitorCommon
+namespace MonitorCommon;
+
+public class DelegateDisposable : IDisposable
 {
-    public class DelegateDisposable : IDisposable
+    private readonly Action action;
+
+    private int counter;
+
+    public DelegateDisposable(Action action) => this.action = action;
+
+    public void Dispose()
     {
-        private readonly Action action;
-
-        private int counter;
-
-        public DelegateDisposable(Action action)
+        if (Interlocked.Increment(ref counter) == 1)
         {
-            this.action = action;
-        }
-
-        public void Dispose()
-        {
-            if (Interlocked.Increment(ref counter) == 1)
-            {
-                action();
-            }
+            action();
         }
     }
 }

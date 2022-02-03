@@ -2,68 +2,65 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace MonitorCommon
+namespace MonitorCommon;
+
+/// <summary>
+/// A stream that caches a number of bytes at the start of the stream for times when it's needed for debug output.
+/// </summary>
+public class SnippetCachingStream : Stream
 {
-    /// <summary>
-    /// A stream that caches a number of bytes at the start of the stream for times when it's needed for debug output.
-    /// </summary>
-    public class SnippetCachingStream : Stream
+    private readonly Stream parent;
+    private readonly int snippetLength;
+    private readonly List<byte> snippet = new();
+
+    public SnippetCachingStream(Stream parent, int snippetLength = 256)
     {
-        private readonly Stream parent;
-        private readonly int snippetLength;
-        private readonly List<byte> snippet;
+        this.parent = parent;
+        this.snippetLength = snippetLength;
+    }
 
-        public SnippetCachingStream(Stream parent, int snippetLength = 256)
+    private static IEnumerable<T> GetRange<T>(T[] arr, int offset, int count)
+    {
+        for (int i = 0; i < count; i++)
         {
-            this.parent = parent;
-            this.snippetLength = snippetLength;
+            yield return arr[offset + i];
+        }
+    }
 
-            snippet = new List<byte>();
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        int result = parent.Read(buffer, offset, count);
+
+        if (result > 0 && snippet.Count < snippetLength)
+        {
+            int cnt = Math.Min(result, snippetLength - snippet.Count);
+            snippet.AddRange(GetRange(buffer, offset, cnt));
         }
 
-        private static IEnumerable<T> GetRange<T>(T[] arr, int offset, int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                yield return arr[offset + i];
-            }
-        }
+        return result;
+    }
 
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            int result = parent.Read(buffer, offset, count);
+    public List<byte> Snippet => snippet;
 
-            if (result > 0 && snippet.Count < snippetLength)
-            {
-                int cnt = Math.Min(result, snippetLength - snippet.Count);
-                snippet.AddRange(GetRange(buffer, offset, cnt));
-            }
+    public override void Flush() => throw new NotImplementedException();
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
+    public override void SetLength(long value) => throw new NotImplementedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
 
-            return result;
-        }
+    public override bool CanRead => parent.CanRead;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => parent.Length;
+    public override long Position
+    {
+        get => parent.Position;
+        set => parent.Position = value;
+    }
 
-        public List<byte> Snippet => snippet;
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
 
-        public override void Flush() => throw new System.NotImplementedException();
-        public override long Seek(long offset, SeekOrigin origin) => throw new System.NotImplementedException();
-        public override void SetLength(long value) => throw new System.NotImplementedException();
-        public override void Write(byte[] buffer, int offset, int count) => throw new System.NotImplementedException();
-
-        public override bool CanRead => parent.CanRead;
-        public override bool CanSeek => false;
-        public override bool CanWrite => false;
-        public override long Length => parent.Length;
-        public override long Position
-        {
-            get => parent.Position;
-            set => parent.Position = value;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            parent.Dispose();
-        }
+        parent.Dispose();
     }
 }

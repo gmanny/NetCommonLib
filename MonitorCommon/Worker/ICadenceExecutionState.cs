@@ -1,9 +1,8 @@
-﻿namespace MonitorCommon.Worker
-{
-    public interface ICadenceExecutionState
-    {
-        void Started();
+﻿namespace MonitorCommon.Worker;
 
-        void Done();
-    }
+public interface ICadenceExecutionState
+{
+    void Started();
+
+    void Done();
 }

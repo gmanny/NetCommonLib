@@ -3,80 +3,81 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 
-namespace MonitorCommon.Threading
+namespace MonitorCommon.Threading;
+
+public interface INotificationRecord
 {
-    public interface INotificationRecord
+    void Notify();
+}
+
+public class NotificationRunner
+{
+    private readonly string name;
+    private readonly ILogger logger;
+
+    private readonly ConcurrentQueue<INotificationRecord> queue = new();
+
+    private int started;
+
+    public NotificationRunner(string name, ILogger logger)
     {
-        void Notify();
+        this.name = name;
+        this.logger = logger;
     }
 
-    public class NotificationRunner
+    public void Add(INotificationRecord record) => queue.Enqueue(record);
+
+    public bool TryStart()
     {
-        private readonly string name;
-        private readonly ILogger logger;
-
-        private readonly ConcurrentQueue<INotificationRecord> queue = new ConcurrentQueue<INotificationRecord>();
-
-        private int started;
-
-        public NotificationRunner(string name, ILogger logger)
+        if (Interlocked.Exchange(ref started, 1) != 0)
         {
-            this.name = name;
-            this.logger = logger;
+            return false;
         }
 
-        public void Add(INotificationRecord record) => queue.Enqueue(record);
-
-        public bool TryStart()
+        Thread t = new(ThreadRun)
         {
-            if (Interlocked.Exchange(ref started, 1) != 0)
-            {
-                return false;
-            }
+            IsBackground = true,
+            Name = name,
+            Priority = ThreadPriority.BelowNormal
+        };
 
-            Thread t = new Thread(ThreadRun);
-            t.IsBackground = true;
-            t.Name = name;
-            t.Priority = ThreadPriority.BelowNormal;
+        t.Start();
 
-            t.Start();
+        return true;
+    }
 
-            return true;
-        }
-
-        private void ThreadRun()
+    private void ThreadRun()
+    {
+        try
         {
-            try
-            {
-                int waits = 0;
+            int waits = 0;
 
-                while (true)
+            while (true)
+            {
+                if (!queue.TryDequeue(out INotificationRecord rec))
                 {
-                    if (!queue.TryDequeue(out INotificationRecord rec))
-                    {
-                        Thread.Sleep(TimeSpan.FromMilliseconds(Math.Min(4, waits / 100)));
+                    Thread.Sleep(TimeSpan.FromMilliseconds(Math.Min(4, waits / 100)));
 
-                        waits++;
+                    waits++;
 
-                        continue;
-                    }
+                    continue;
+                }
 
-                    waits = 0;
+                waits = 0;
 
-                    try
-                    {
-                        rec.Notify();
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogDebug(e, $"Error running notification {rec}");
-                    }
+                try
+                {
+                    rec.Notify();
+                }
+                catch (Exception e)
+                {
+                    logger.LogDebug(e, $"Error running notification {rec}");
                 }
             }
-            finally
-            {
-                logger.LogDebug($"Notification thread {name} finished");
-            }
+        }
+        finally
+        {
+            logger.LogDebug($"Notification thread {name} finished");
         }
     }
 }

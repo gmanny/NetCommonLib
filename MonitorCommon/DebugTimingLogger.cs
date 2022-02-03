@@ -1,26 +1,25 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace MonitorCommon
+namespace MonitorCommon;
+
+public class DebugTimingLogger : IDisposable
 {
-    public class DebugTimingLogger : IDisposable
+    private readonly ILogger logger;
+    private readonly string operation;
+    private readonly int start;
+
+    public DebugTimingLogger(ILogger logger, string operation)
     {
-        private readonly ILogger logger;
-        private readonly string operation;
-        private readonly int start;
+        this.logger = logger;
+        this.operation = operation;
 
-        public DebugTimingLogger(ILogger logger, string operation)
-        {
-            this.logger = logger;
-            this.operation = operation;
-
-            start = Environment.TickCount;
-        }
+        start = Environment.TickCount;
+    }
 
 
-        public void Dispose()
-        {
-            logger.LogInformation($"{operation} took {(Environment.TickCount - start) / 1000.0:#.00}s");
-        }
+    public void Dispose()
+    {
+        logger.LogInformation($"{operation} took {(Environment.TickCount - start) / 1000.0:#.00}s");
     }
 }

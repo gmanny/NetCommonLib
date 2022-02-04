@@ -22,7 +22,7 @@ public static class CollectionUtil
 
     public static Option<TValue> TryGetOption<TKey, TValue>(this IDictionary<TKey, TValue> dic, TKey key)
     {
-        if (dic.TryGetValue(key, out TValue val))
+        if (dic.TryGetValue(key, out TValue? val))
         {
             return Some(val);
         }

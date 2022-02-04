@@ -12,7 +12,7 @@ public abstract class CommonInitRunningSvc<TResource> : IInitStageService<TResou
     private readonly TaskCompletionSource<Unit> initComplete = new();
     private readonly TaskCompletionSource<Unit> finished = new();
 
-    protected CommonInitRunningSvc(ILogger logger, string serviceId = null)
+    protected CommonInitRunningSvc(ILogger logger, string? serviceId = null)
     {
         this.logger = logger;
 

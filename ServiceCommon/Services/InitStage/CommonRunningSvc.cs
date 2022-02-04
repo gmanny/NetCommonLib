@@ -6,7 +6,7 @@ public interface IDummyInitResource { }
 
 public abstract class CommonRunningSvc : CommonInitRunningSvc<IDummyInitResource>
 {
-    protected CommonRunningSvc(ILogger logger, string serviceId = null) : base(logger, serviceId)
+    protected CommonRunningSvc(ILogger logger, string? serviceId = null) : base(logger, serviceId)
     {
         InitSuccess();
     }

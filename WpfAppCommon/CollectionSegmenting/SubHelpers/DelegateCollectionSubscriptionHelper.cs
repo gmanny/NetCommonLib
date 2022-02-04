@@ -13,10 +13,10 @@ public class DelegateCollectionSubscriptionHelper<TItem> : AbstractCollectionSub
 {
     private readonly ItemAdditionHandler<TItem> additionHandler;
     private readonly ItemRemovalHandler<TItem> removalHandler;
-    private readonly ItemMoveHandler<TItem> moveHandler;
+    private readonly ItemMoveHandler<TItem>? moveHandler;
 
-    public DelegateCollectionSubscriptionHelper([NotNull] IList<TItem> collection, [NotNull] INotifyCollectionChanged notifier, [NotNull] ItemAdditionHandler<TItem> additionHandler,
-        [NotNull] ItemRemovalHandler<TItem> removalHandler, ItemMoveHandler<TItem> moveHandler = null, bool collectionOwnerMode = true) 
+    public DelegateCollectionSubscriptionHelper(IList<TItem> collection, INotifyCollectionChanged notifier, ItemAdditionHandler<TItem> additionHandler,
+        ItemRemovalHandler<TItem> removalHandler, ItemMoveHandler<TItem>? moveHandler = null, bool collectionOwnerMode = true) 
         : base(collection, notifier, collectionOwnerMode)
     {
         ArgumentNullException.ThrowIfNull(additionHandler);

@@ -10,9 +10,9 @@ public abstract class ArrayJsonConverter<T> : JsonConverter<T>
     protected virtual bool ArrayElementCountStrict => false;
 
     protected abstract T ReadJson(JArray item, JsonSerializer serializer);
-    protected abstract object[] WriteJson(T value, JsonSerializer serializer);
+    protected abstract object[] WriteJson(T? value, JsonSerializer serializer);
 
-    public sealed override T ReadJson(JsonReader reader, Type objectType, T existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public sealed override T ReadJson(JsonReader reader, Type objectType, T? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
         if (reader.TokenType != JsonToken.StartArray)
         {
@@ -29,7 +29,7 @@ public abstract class ArrayJsonConverter<T> : JsonConverter<T>
         return ReadJson(item, serializer);
     }
 
-    public sealed override void WriteJson(JsonWriter writer, T value, JsonSerializer serializer)
+    public sealed override void WriteJson(JsonWriter writer, T? value, JsonSerializer serializer)
     {
         JArray arr = new(WriteJson(value, serializer));
 

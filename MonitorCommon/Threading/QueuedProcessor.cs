@@ -9,7 +9,7 @@ using MonitorCommon.Tasks;
 
 namespace MonitorCommon.Threading;
 
-public class QueuedProcessor<TWork, TResult>
+public class QueuedProcessor<TWork, TResult> where TWork : notnull
 {
     private readonly Func<TWork, CancellationToken, Task<TResult>> workProcessor;
     private readonly int threadCount;
@@ -39,7 +39,7 @@ public class QueuedProcessor<TWork, TResult>
         TaskCompletionSource<TResult> result = new();
 
         // this action will run earlier
-        if (!first && workCache.TryGetValue(work, out QueueRecord workItem))
+        if (!first && workCache.TryGetValue(work, out QueueRecord? workItem))
         {
             return workItem.Result.Task;
         }

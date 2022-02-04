@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using WpfAppCommon.CollectionSegmenting.SubHelpers;
 
 namespace WpfAppCommon.CollectionSegmenting;
@@ -21,7 +20,7 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
     private readonly Stack<TInnerItem> itemAdditionStack = new();
     private readonly HashSet<TOuterItem> itemSet = new();
     private readonly Func<TInnerItem, TOuterItem> itemConverter;
-    private int collectionIndex = -1;
+    private int collectionIndex;
 
     /// <summary>
     /// Initializes the block handler and inserts the block's contents into the specified index in the collection.
@@ -32,7 +31,7 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
     /// <param name="initialCollectionIndex">index at which block elements should reside initially</param>
     /// <param name="beforeInsertion">operation to run before this block inserts its contents into the collection</param>
     /// <param name="itemConverter">function that converts inner item to outer item</param>
-    public ItemBlockHandler([NotNull] IItemBlock<TInnerItem> block, [NotNull] ObservableCollection<TOuterItem> outerCollection, [NotNull] Func<TInnerItem, TOuterItem> itemConverter, [NotNull] IItemBlockParent<TOuterItem, TInnerItem> itemBlockParent, int initialCollectionIndex, Action<ItemBlockHandler<TOuterItem, TInnerItem>> beforeInsertion)
+    public ItemBlockHandler(IItemBlock<TInnerItem> block, ObservableCollection<TOuterItem> outerCollection, Func<TInnerItem, TOuterItem> itemConverter, IItemBlockParent<TOuterItem, TInnerItem> itemBlockParent, int initialCollectionIndex, Action<ItemBlockHandler<TOuterItem, TInnerItem>> beforeInsertion)
     {
         // check parameters
         ArgumentNullException.ThrowIfNull(block);
@@ -120,7 +119,7 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
                 TOuterItem currentItem = outerCollection[i];
 
                 // check if it's our item
-                if (!currentItem.Equals(outerItem))
+                if (!Object.Equals(currentItem, outerItem))
                 {
                     continue;
                 }
@@ -139,7 +138,7 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
         TOuterItem collectionItem = outerCollection[index];
 
         // check
-        if (!collectionItem.Equals(outerItem))
+        if (!Object.Equals(collectionItem, outerItem))
         {
             throw new InvalidOperationException($"Found another item at the specified removal index (block index: {collectionIndex}, removal index: {index})");
         }
@@ -246,7 +245,7 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
             // convert to outer item
             TOuterItem outerItem = itemConverter(innerItem);
 
-            if (outerItem.Equals(item))
+            if (Object.Equals(outerItem, item))
             {
                 return true;
             }
@@ -276,7 +275,7 @@ public class ItemBlockHandler<TOuterItem, TInnerItem> : IDisposable
             TInnerItem removedItem = handler.itemAdditionStack.Pop();
 
             // check stack consistency
-            if (!removedItem.Equals(item))
+            if (!Object.Equals(removedItem, item))
             {
                 throw new InvalidOperationException("Somehow item addition stack was corrupted.");
             }

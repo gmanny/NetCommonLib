@@ -23,10 +23,10 @@ public partial class Prompt
     public string defaultResponse = "";
     public MessageBoxResult messageboxResult;
 
-    public static string OKText { get; set; }
-    public static string CancelText { get; set; }
-    public static string YesText { get; set; }
-    public static string NoText { get; set; }
+    public static string? OkText { get; set; }
+    public static string? CancelText { get; set; }
+    public static string? YesText { get; set; }
+    public static string? NoText { get; set; }
 
     private readonly Dictionary<string, List<string>> lang = new()
     {
@@ -122,7 +122,7 @@ public partial class Prompt
             btnNo.Content = lang[CultureInfo.CurrentCulture.Name][3];
         }
 
-        if (!string.IsNullOrEmpty(OKText)) { btnOK.Content = OKText; }
+        if (!string.IsNullOrEmpty(OkText)) { btnOK.Content = OkText; }
         if (!string.IsNullOrEmpty(CancelText)) { btnCancel.Content = CancelText; }
         if (!string.IsNullOrEmpty(YesText)) { btnYes.Content = YesText; }
         if (!string.IsNullOrEmpty(NoText)) { btnNo.Content = NoText; }

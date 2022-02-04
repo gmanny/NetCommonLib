@@ -82,7 +82,7 @@ public static class TextBlockService
         }
     }
 
-    private static bool CalculateIsTextTrimmed(TextBlock textBlock)
+    private static bool CalculateIsTextTrimmed(TextBlock? textBlock)
     {
         if (textBlock == null || textBlock.TextTrimming == TextTrimming.None || textBlock.TextWrapping != TextWrapping.NoWrap)
         {

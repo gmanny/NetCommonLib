@@ -4,7 +4,7 @@ using Ninject.Syntax;
 
 namespace Monitor.ServiceCommon.Services.DiRouter;
 
-public class DiNamedRouter<K, T> : Dictionary<K, T> where T : IDiNamedInstance<K>
+public class DiNamedRouter<K, T> : Dictionary<K, T> where T : IDiNamedInstance<K> where K : notnull
 {
     public DiNamedRouter(T[] allInstances)
     {

@@ -54,7 +54,7 @@ public class NotificationRunner
 
             while (true)
             {
-                if (!queue.TryDequeue(out INotificationRecord rec))
+                if (!queue.TryDequeue(out INotificationRecord? rec))
                 {
                     Thread.Sleep(TimeSpan.FromMilliseconds(Math.Min(4, waits / 100)));
 

@@ -13,7 +13,7 @@ public abstract class CascadeJsonConverterBase : JsonConverter
 
     // this constructor is intended for use with JsonConverterAttribute
     protected CascadeJsonConverterBase(object[] augmentConverters)
-        : this(augmentConverters.Select(FromAttributeData).ToArray())
+        : this(augmentConverters.Select(FromAttributeData).SkipNulls().ToArray())
     { }
 
     protected CascadeJsonConverterBase(JsonConverter[] augmentConverters)
@@ -21,7 +21,7 @@ public abstract class CascadeJsonConverterBase : JsonConverter
         this.augmentConverters = augmentConverters;
     }
 
-    protected static JsonConverter FromAttributeData(object augmentConverterObj)
+    protected static JsonConverter? FromAttributeData(object augmentConverterObj)
     {
         if (augmentConverterObj is not object[] augmentConverter)
         {
@@ -44,15 +44,15 @@ public abstract class CascadeJsonConverterBase : JsonConverter
             throw new ArgumentException($"Augment converter type should inherit from JsonConverter abstract type", nameof(augmentConverterObj));
         }
 
-        object converter = Activator.CreateInstance(convType, augmentConverter[1..]);
-        return (JsonConverter)converter;
+        object? converter = Activator.CreateInstance(convType, augmentConverter[1..]);
+        return (JsonConverter?) converter;
     }
 
-    protected abstract void WriteJsonInner(JsonWriter writer, object value, JsonSerializer serializer);
+    protected abstract void WriteJsonInner(JsonWriter writer, object? value, JsonSerializer serializer);
 
-    protected abstract object ReadJsonInner(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer);
+    protected abstract object? ReadJsonInner(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer);
 
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         using (AugmentedConverterScope(serializer))
         {
@@ -60,7 +60,7 @@ public abstract class CascadeJsonConverterBase : JsonConverter
         }
     }
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         using (AugmentedConverterScope(serializer))
         {

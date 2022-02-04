@@ -11,7 +11,7 @@ public class TimedAggregator<T, TState> : IAsyncFlushable
     private readonly TState state;
 
     private long time;
-    private List<T> items;
+    private List<T> items = new();
 
     public TimedAggregator(Action<(long time, List<T> items, TState state)> onPush, TState state)
     {

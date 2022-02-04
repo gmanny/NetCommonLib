@@ -36,8 +36,9 @@ public class WorkerThreadContainer<TService, TTask>
 
         if (threadCount > Environment.ProcessorCount - ignoredCores.Length)
         {
-            logger.LogCritical($"The number of threads specified is bigger than the number of CPUs ({Environment.ProcessorCount}) minus the number of ignored cores ({ignoredCores.Length}, [{String.Join(",", ignoredCores)}])");
-            return;
+            string message = $"The number of threads specified is bigger than the number of CPUs ({Environment.ProcessorCount}) minus the number of ignored cores ({ignoredCores.Length}, [{String.Join(",", ignoredCores)}])";
+            logger.LogCritical(message);
+            throw new Exception(message);
         }
 
         processorIdx = Enumerable.Range(1, Environment.ProcessorCount)
@@ -97,8 +98,7 @@ public class WorkerThreadContainer<TService, TTask>
 
         do
         {
-            bool gotTask = taskQueue.TryDequeue(out TTask task);
-            if (!gotTask)
+            if (!taskQueue.TryDequeue(out TTask? task))
             {
                 continue;
             }

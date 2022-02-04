@@ -55,7 +55,7 @@ public class FallbackConfiguration : IConfiguration
         return new CompositeChangeToken(layers.Select(x => x.GetReloadToken()).ToList());
     }
 
-    public string this[string key]
+    public string? this[string key]
     {
         get
         {

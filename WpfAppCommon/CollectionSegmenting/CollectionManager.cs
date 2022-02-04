@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 
 namespace WpfAppCommon.CollectionSegmenting;
 
-public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOuterItem, TInnerItem>, IItemBlockParent<TOuterItem, TInnerItem>, IItemBlock<TOuterItem>
+public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOuterItem, TInnerItem>, IItemBlockParent<TOuterItem, TInnerItem>, IItemBlock<TOuterItem> where TInnerItem : notnull
 {
     private readonly ObservableCollection<TOuterItem> collection;
     private readonly InternalItemBlock frontItemBlock = new();
@@ -15,7 +14,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
     private readonly Dictionary<TInnerItem, DefaultCollectionBlock> itemBlockTypeHash = new();
     private readonly Func<TInnerItem, TOuterItem> itemConverter;
 
-    public CollectionManager([NotNull] Func<TInnerItem, TOuterItem> itemConverter)
+    public CollectionManager(Func<TInnerItem, TOuterItem> itemConverter)
         : this(itemConverter, new ObservableCollection<TOuterItem>())
     { }
 
@@ -24,7 +23,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
     /// </summary>
     /// <param name="itemConverter">function that's used to conver inner item to outer item</param>
     /// <param name="collection">outer collection that this manager should manage, this collection should be empty</param>
-    public CollectionManager([NotNull] Func<TInnerItem, TOuterItem> itemConverter, [NotNull] ObservableCollection<TOuterItem> collection)
+    public CollectionManager(Func<TInnerItem, TOuterItem> itemConverter, ObservableCollection<TOuterItem> collection)
     {
         ArgumentNullException.ThrowIfNull(itemConverter);
         ArgumentNullException.ThrowIfNull(collection);
@@ -56,7 +55,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
 
     public ObservableCollection<TOuterItem> ItemCollection => collection;
 
-    public bool IsAbove([NotNull] TOuterItem outerItem, [NotNull] IItemBlock<TInnerItem> itemBlock)
+    public bool IsAbove(TOuterItem outerItem, IItemBlock<TInnerItem> itemBlock)
     {
         ArgumentNullException.ThrowIfNull(outerItem);
         ArgumentNullException.ThrowIfNull(itemBlock);
@@ -91,7 +90,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
     /// </summary>
     /// <param name="index">position at which to insert the block</param>
     /// <param name="block">block to insert</param>
-    private void InsertItemBlock(int index, [NotNull] IItemBlock<TInnerItem> block)
+    private void InsertItemBlock(int index, IItemBlock<TInnerItem> block)
     {
         ArgumentNullException.ThrowIfNull(block);
         if (index < 0 || index > blockHandlers.Count)
@@ -125,7 +124,7 @@ public class CollectionManager<TOuterItem, TInnerItem> : ICollectionManager<TOut
     public void RemoveItemBlock(IItemBlock<TInnerItem> itemBlock)
     {
         // get block handler
-        if (!blockHandlerHash.TryGetValue(itemBlock, out ItemBlockHandler<TOuterItem, TInnerItem> blockHandler))
+        if (!blockHandlerHash.TryGetValue(itemBlock, out ItemBlockHandler<TOuterItem, TInnerItem>? blockHandler))
         {
             throw new InvalidOperationException("Didn't find the block handler for the block to be removed. (Maybe, there was no such block in this manager.)");
         }

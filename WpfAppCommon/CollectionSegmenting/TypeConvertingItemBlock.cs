@@ -3,7 +3,7 @@
 namespace WpfAppCommon.CollectionSegmenting;
 
 public class TypeConvertingItemBlock<TInnerItem, TOuterItem> : IItemBlock<TOuterItem>
-    where TInnerItem : TOuterItem
+    where TInnerItem : notnull, TOuterItem
 {
     private readonly CollectionManager<TOuterItem, TInnerItem> mgr = new(i => i);
 

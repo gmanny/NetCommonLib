@@ -28,8 +28,8 @@ public class WpfAppEntryPoint<TApp, TMainForm> : IWpfAppEntryPoint
     private readonly bool signalInitFinish;
     private readonly bool showConsole;
 
-    private WpfAppService<TApp, TMainForm> app;
-    private WpfAppStartupSequence<TApp, TMainForm> startupSequenceOverride;
+    private WpfAppService<TApp, TMainForm>? app;
+    private WpfAppStartupSequence<TApp, TMainForm>? startupSequenceOverride;
 
     public WpfAppEntryPoint(List<INinjectModule> additionalModules, string[] args, bool singleInstance = true, bool signalInitFinish = true, bool showConsole = true)
     {

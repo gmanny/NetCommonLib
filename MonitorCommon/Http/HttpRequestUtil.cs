@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -36,7 +35,7 @@ public static class HttpRequestUtil
         }
     }
 
-    public static async Task<HttpWebResponse> SendRequestGen(string url, string method = "GET", IEnumerable<(string name, string value)> headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest> setupRequest = null, CancellationToken ct = default)
+    public static async Task<HttpWebResponse> SendRequestGen(string url, string method = "GET", IEnumerable<(string name, string value)>? headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest>? setupRequest = null, CancellationToken ct = default)
     {
 #pragma warning disable SYSLIB0014
         HttpWebRequest req = (HttpWebRequest) WebRequest.Create(url);
@@ -62,7 +61,7 @@ public static class HttpRequestUtil
         return result;
     }
 
-    public static async Task<Stream> SendRequestChecked(string url, string method = "GET", IEnumerable<(string name, string value)> headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest> setupRequest = null, CancellationToken ct = default)
+    public static async Task<Stream> SendRequestChecked(string url, string method = "GET", IEnumerable<(string name, string value)>? headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest>? setupRequest = null, CancellationToken ct = default)
     {
         HttpWebResponse responseObject = await SendRequestGen(url, method, headers, allowAutoRedirect, setupRequest, ct);
 
@@ -80,7 +79,7 @@ public static class HttpRequestUtil
         return responseStream;
     }
 
-    public static async Task<string> SendRequest(string url, string method = "GET", IEnumerable<(string name, string value)> headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest> setupRequest = null, CancellationToken ct = default)
+    public static async Task<string> SendRequest(string url, string method = "GET", IEnumerable<(string name, string value)>? headers = null, bool allowAutoRedirect = true, Action<HttpWebRequest>? setupRequest = null, CancellationToken ct = default)
     {
         Stream responseStream = await SendRequestChecked(url, method, headers, allowAutoRedirect, setupRequest, ct);
             

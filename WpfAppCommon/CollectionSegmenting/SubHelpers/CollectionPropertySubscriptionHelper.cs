@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Windows.Markup;
 
 namespace WpfAppCommon.CollectionSegmenting.SubHelpers;
 
@@ -22,10 +20,10 @@ public class CollectionPropertySubscriptionHelper<TItem> : IDisposable
     private readonly ItemRemovalHandler<TItem> removalHandler;
     private readonly ItemMoveHandler<TItem> moveHandler;
 
-    private DelegateCollectionSubscriptionHelper<TItem> currentHelper;
+    private DelegateCollectionSubscriptionHelper<TItem>? currentHelper;
 
-    public CollectionPropertySubscriptionHelper([NotNull] INotifyPropertyChanged objectWithProperty, [NotNull] string propertyName, [NotNull] ItemAdditionHandler<TItem> additionHandler,
-        [NotNull] ItemRemovalHandler<TItem> removalHandler, ItemMoveHandler<TItem> moveHandler)
+    public CollectionPropertySubscriptionHelper(INotifyPropertyChanged objectWithProperty, string propertyName, ItemAdditionHandler<TItem> additionHandler,
+        ItemRemovalHandler<TItem> removalHandler, ItemMoveHandler<TItem> moveHandler)
     {
         // check parameters
         ArgumentNullException.ThrowIfNull(objectWithProperty);
@@ -43,14 +41,9 @@ public class CollectionPropertySubscriptionHelper<TItem> : IDisposable
 
         // -- initialize first collection helper --
         // get property of the object
-        propertyInfo = objectWithProperty.GetType().GetProperty(propertyName);
-
-        // check
-        if (propertyInfo == null)
-        {
-            throw new InvalidOperationException($"Object of type {objectWithProperty.GetType().Name} doesn't have proeprty named `{propertyName}`");
-        }
-
+        propertyInfo = objectWithProperty.GetType().GetProperty(propertyName) 
+                           ?? throw new InvalidOperationException($"Object of type {objectWithProperty.GetType().Name} doesn't have proeprty named `{propertyName}`");
+        
         BuildCollectionHelper();
 
         // subscribe for property changes
@@ -60,7 +53,7 @@ public class CollectionPropertySubscriptionHelper<TItem> : IDisposable
     private void BuildCollectionHelper()
     {
         // get initial property value
-        object value = propertyInfo.GetValue(objectWithProperty, null); // not supporting indexer here
+        object? value = propertyInfo.GetValue(objectWithProperty, null); // not supporting indexer here
 
         // check it's nullness
         if (value == null)
@@ -82,7 +75,7 @@ public class CollectionPropertySubscriptionHelper<TItem> : IDisposable
         currentHelper = new DelegateCollectionSubscriptionHelper<TItem>(list, notifyCollectionChanged, additionHandler, removalHandler, moveHandler);
     }
 
-    private void OnObjectWithPropertyPropertyChanged(object sender, PropertyChangedEventArgs e)
+    private void OnObjectWithPropertyPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // check the property name
         if (e.PropertyName != propertyName)

@@ -21,7 +21,7 @@ public class FallbackConfigurationSection : FallbackConfiguration, IConfiguratio
     public string Key => layers[0].Key;
     public string Path => layers[0].Path;
 
-    public string Value
+    public string? Value
     {
         get
         {

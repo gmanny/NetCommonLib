@@ -21,7 +21,7 @@ public static class TaskUtil
             
         if (t.IsFaulted)
         {
-            return new Failure<T>(t.Exception);
+            return new Failure<T>(t.Exception ?? new AggregateException(new Exception("Task faulted empty exception")));
         }
 
         if (t.IsCanceled)
@@ -59,7 +59,7 @@ public static class TaskUtil
     public static void OnComplete(this Task t, Action<ITaskResult<Unit>> f) => t.ContinueWith(t2 => f(t2.Result()));
     public static void OnSuccess<TSource>(this Task<TSource> t, Action<TSource> f) => t.ContinueWith(t2 => f(t2.Result), TaskContinuationOptions.OnlyOnRanToCompletion);
     public static void OnSuccess(this Task t, Action f) => t.ContinueWith(t2 => f(), TaskContinuationOptions.OnlyOnRanToCompletion);
-    public static void OnFailure(this Task t, Action<AggregateException> f) => t.ContinueWith(t2 => f(t2.Exception), TaskContinuationOptions.OnlyOnFaulted);
+    public static void OnFailure(this Task t, Action<AggregateException> f) => t.ContinueWith(t2 => f(t2.Exception ?? new AggregateException(new Exception("Task faulted empty exception"))), TaskContinuationOptions.OnlyOnFaulted);
     public static void OnCanceled(this Task t, Action f) => t.ContinueWith(t2 => f(), TaskContinuationOptions.OnlyOnCanceled);
 
     public static Task MapAsync<TSource>(this Task<TSource> src, Func<TSource, Task> f) => TaskExtensions.MapAsync(src, x => f(x).ToUnit());
@@ -115,7 +115,7 @@ public static class TaskUtil
         {
             case Success<T> s: tcs.SetResult(s.value); break;
             case Failure<T> f: tcs.SetException(f.exception); break;
-            case Cancel<T> _: tcs.SetCanceled(); break;
+            case Cancel<T>: tcs.SetCanceled(); break;
             default:
                 throw new Exception($"Unknown task result type {r.GetType().Name}");
         }
@@ -127,7 +127,7 @@ public static class TaskUtil
         {
             case Success<T> s: tcs.TrySetResult(s.value); break;
             case Failure<T> f: tcs.TrySetException(f.exception); break;
-            case Cancel<T> _: tcs.TrySetCanceled(); break;
+            case Cancel<T>: tcs.TrySetCanceled(); break;
             default:
                 throw new Exception($"Unknown task result type {r.GetType().Name}");
         }

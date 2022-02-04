@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MonitorCommon.Caches;
 
-public class InMemoryCache<TKey, TValue>
+public class InMemoryCache<TKey, TValue> where TKey : notnull
 {
     private readonly Dictionary<TKey, (TValue value, LinkedListNode<TimeBox<TKey>> listNode)> cache = new();
     private readonly LinkedList<TimeBox<TKey>> usageTimes = new();
@@ -15,14 +15,14 @@ public class InMemoryCache<TKey, TValue>
     private readonly ILogger logger;
     private readonly string name;
     private readonly TimeSpan cacheSizeReportingTime;
-    private readonly Action<TValue> onRemove;
+    private readonly Action<TValue>? onRemove;
     private readonly bool overflowIsCritical;
 
     private int hits;
     private int misses;
     private DateTime lastReport = DateTime.UtcNow;
 
-    public InMemoryCache(TimeSpan maxAge, int maxSize, ILogger logger, string name, TimeSpan cacheSizeReportingTime, Action<TValue> onRemove = default, bool overflowIsCritical = true)
+    public InMemoryCache(TimeSpan maxAge, int maxSize, ILogger logger, string name, TimeSpan cacheSizeReportingTime, Action<TValue>? onRemove = default, bool overflowIsCritical = true)
     {
         this.maxAge = maxAge;
         this.maxSize = maxSize;
@@ -51,7 +51,7 @@ public class InMemoryCache<TKey, TValue>
     {
         lock (sync)
         {
-            LinkedListNode<TimeBox<TKey>> last = usageTimes.Last;
+            LinkedListNode<TimeBox<TKey>>? last = usageTimes.Last;
             while (last != null && now - last.Value.Time > maxAge)
             {
                 RemoveItem(last);
@@ -134,7 +134,11 @@ public class InMemoryCache<TKey, TValue>
 
                 while (usageTimes.Count > maxSize)
                 {
-                    LinkedListNode<TimeBox<TKey>> last = usageTimes.Last;
+                    LinkedListNode<TimeBox<TKey>>? last = usageTimes.Last;
+                    if (last == null)
+                    {
+                        break;
+                    }
 
                     RemoveItem(last);
                 }

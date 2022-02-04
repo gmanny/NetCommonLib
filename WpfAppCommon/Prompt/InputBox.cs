@@ -4,7 +4,7 @@ namespace WpfAppCommon.Prompt;
 
 public class InputBox
 {
-    public static string Show(string prompt = "", string title = "", MessageBoxImage icon = MessageBoxImage.Information, string defaultResponse = "", Window owner = null)
+    public static string Show(string prompt = "", string title = "", MessageBoxImage icon = MessageBoxImage.Information, string defaultResponse = "", Window? owner = null)
     {
         Prompt w = new()
         {

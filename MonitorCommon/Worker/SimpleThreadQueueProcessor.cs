@@ -10,11 +10,11 @@ public class SimpleThreadQueueProcessor<TTask>
     private readonly Action<TTask> runTask;
     private readonly string threadName;
     private readonly ILogger logger;
-    private readonly Action idleAction;
+    private readonly Action? idleAction;
 
     private readonly ConcurrentQueue<TTask> taskQueue = new();
 
-    public SimpleThreadQueueProcessor(Action<TTask> runTask, string threadName, ILogger logger, Action idleAction = null)
+    public SimpleThreadQueueProcessor(Action<TTask> runTask, string threadName, ILogger logger, Action? idleAction = null)
     {
         this.runTask = runTask;
         this.threadName = threadName;
@@ -50,7 +50,7 @@ public class SimpleThreadQueueProcessor<TTask>
 
         do
         {
-            TTask task;
+            TTask? task;
             while (!taskQueue.TryDequeue(out task))
             {
                 sw.SpinOnce();

@@ -43,7 +43,7 @@ public class FormattedTextBlockUtil
             throw new Exception($"Unknown inline type {d.GetType().FullName}");
         }
 
-        string formattedText = (string)e.NewValue ?? string.Empty;
+        string formattedText = (string?) e.NewValue ?? string.Empty;
         formattedText = $"<Span xml:space=\"preserve\" xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\">{formattedText}</Span>";
 
         inlines.Clear();

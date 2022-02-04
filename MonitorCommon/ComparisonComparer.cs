@@ -9,5 +9,5 @@ public class ComparisonComparer<T> : Comparer<T>
 
     public ComparisonComparer(Comparison<T> comparison) => this.comparison = comparison;
 
-    public override int Compare(T x, T y) => comparison(x, y);
+    public override int Compare(T? x, T? y) => comparison(x!, y!); // CLR does it like this...
 }

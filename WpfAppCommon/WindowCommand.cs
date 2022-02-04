@@ -12,11 +12,11 @@ public class WindowCommand : ICommand
         this.executeDelegate = executeDelegate;
     }
 
-    public bool CanExecute(object parameter) => true;
+    public bool CanExecute(object? parameter) => true;
 
 #pragma warning disable 67
-    public event EventHandler CanExecuteChanged;
+    public event EventHandler? CanExecuteChanged;
 #pragma warning restore 67
 
-    public void Execute(object parameter) => executeDelegate();
+    public void Execute(object? parameter) => executeDelegate();
 }

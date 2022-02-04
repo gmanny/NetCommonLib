@@ -11,7 +11,7 @@ public struct SynchronizationContextRemover : INotifyCompletion
 
     public void OnCompleted(Action continuation)
     {
-        SynchronizationContext prevContext = SynchronizationContext.Current;
+        SynchronizationContext? prevContext = SynchronizationContext.Current;
         try
         {
             SynchronizationContext.SetSynchronizationContext(null);

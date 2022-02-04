@@ -21,7 +21,7 @@ public class LoggingSvc
         }
 
         NLog.LogManager.LoadConfiguration("conf/nlog.config");
-        Factory.AddNLog();
+        Factory.AddProvider(new NLogLoggerProvider());
 
         lifetime.SetLogger(Factory.CreateLogger(lifetime.GetType()));
     }

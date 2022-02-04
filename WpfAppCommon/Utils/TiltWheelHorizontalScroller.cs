@@ -16,9 +16,9 @@ public static class WpfChildHelper
     /// <typeparam name="T">Type of chiled to be found</typeparam>
     /// <param name="originalSource"></param>
     /// <returns></returns>
-    public static T FindChildOfType<T>(this DependencyObject originalSource) where T : DependencyObject
+    public static T? FindChildOfType<T>(this DependencyObject? originalSource) where T : DependencyObject
     {
-        T ret = originalSource as T;
+        T? ret = originalSource as T;
 
         if (originalSource != null && ret == null)
         {
@@ -61,7 +61,7 @@ public class TiltWheelHorizontalScroller
 
         control.MouseEnter += (_, _) =>
         {
-            ScrollViewer scrollViewer = d.FindChildOfType<ScrollViewer>();
+            ScrollViewer? scrollViewer = d.FindChildOfType<ScrollViewer>();
             if (scrollViewer != null)
             {
                 _ = new TiltWheelMouseScrollHelper(scrollViewer, d);
@@ -85,9 +85,9 @@ public class TiltWheelMouseScrollHelper
     public TiltWheelMouseScrollHelper(ScrollViewer scrollViewer, DependencyObject d)
     {
         this.scrollViewer = scrollViewer;
-        hwndSource = PresentationSource.FromDependencyObject(d) as HwndSource;
+        hwndSource = PresentationSource.FromDependencyObject(d) as HwndSource ?? throw new Exception($"Couldn't get HWND source for {d}");
         hook = WindowProc;
-        hwndSource?.AddHook(hook);
+        hwndSource.AddHook(hook);
         if (scrollViewers.Add(scrollViewer.GetHashCode()))
         {
             scrollViewer.MouseLeave += (sender, e) =>

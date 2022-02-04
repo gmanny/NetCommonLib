@@ -2,11 +2,11 @@
 
 namespace MonitorCommon.Caches;
 
-public class TimedObjectCache<T>
+public class TimedObjectCache<T> where T : notnull
 {
     private readonly TimeSpan maxAge;
         
-    private TimeBox<T> current = new(Epoch.Start, default);
+    private TimeBox<T> current = new(Epoch.Start, default!);
 
     public TimedObjectCache(TimeSpan maxAge)
     {

@@ -16,7 +16,7 @@ public class WpfAppService<TApp, TMainForm> : IService
     private readonly TApp app;
     private readonly IKernel kernel;
         
-    private TMainForm mainForm;
+    private TMainForm? mainForm;
     private WpfAppStartupSequence<TApp, TMainForm> startupSequence;
 
     // gets app and form from the DI engine

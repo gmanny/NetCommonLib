@@ -49,12 +49,18 @@ public static class TimeSpanFormatter
             {"D", "{0:P:Days:Day}"}
         };
 
-        public string Format(string format, object arg, IFormatProvider formatProvider)
+        public string Format(string? format, object? arg, IFormatProvider? formatProvider)
         {
-            return String.Format(new PluralFormatter(), timeformats[format], arg);
+            ArgumentNullException.ThrowIfNull(format);
+            if (!timeformats.TryGetValue(format, out string? fmt))
+            {
+                throw new ArgumentException($"Couldn't find format {format}", nameof(format));
+            }
+
+            return String.Format(new PluralFormatter(), fmt, arg);
         }
 
-        public object GetFormat(Type formatType)
+        public object? GetFormat(Type? formatType)
         {
             return formatType == typeof(ICustomFormatter) ? this : null;
         }
@@ -63,11 +69,13 @@ public static class TimeSpanFormatter
     // formats a numeric value based on a format P:Plural:Singular
     public class PluralFormatter : ICustomFormatter, IFormatProvider
     {
-        public string Format(string format, object arg, IFormatProvider formatProvider)
+        public string Format(string? format, object? arg, IFormatProvider? formatProvider)
         {
+            ArgumentNullException.ThrowIfNull(format);
+
             if (arg != null)
             {
-                var parts = format.Split(':'); // ["P", "Plural", "Singular"]
+                string[] parts = format.Split(':'); // ["P", "Plural", "Singular"]
 
                 if (parts[0] == "P") // correct format?
                 {
@@ -81,7 +89,7 @@ public static class TimeSpanFormatter
             return String.Format(format, arg);
         }
 
-        public object GetFormat(Type formatType)
+        public object? GetFormat(Type? formatType)
         {
             return formatType == typeof(ICustomFormatter) ? this : null;
         }

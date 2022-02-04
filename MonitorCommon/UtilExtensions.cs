@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using LanguageExt;
@@ -14,14 +15,14 @@ public static class UtilExtensions
     public static IEnumerable<(A, B)> CMul<A, B>(this IEnumerable<A> a, IEnumerable<B> b) =>
         a.SelectMany(a_ => b.Select(b_ => (a_, b_)));
 
-    public static IDictionary<A, B> ToDictionary<A, B>(this IEnumerable<(A k, B v)> a) =>
+    public static IDictionary<A, B> ToDictionary<A, B>(this IEnumerable<(A k, B v)> a) where A : notnull =>
         a.ToDictionary(v => v.k, v => v.v);
 
     public static ISet<A> ToSet<A>(this IEnumerable<A> a) => new System.Collections.Generic.HashSet<A>(a);
 
     public static V GetOrElse<K, V>(this IDictionary<K, V> dict, K key, V def)
     {
-        if (!dict.TryGetValue(key, out V res))
+        if (!dict.TryGetValue(key, out V? res))
         {
             return def;
         }
@@ -31,7 +32,7 @@ public static class UtilExtensions
 
     public static V GetOrElse<K, V>(this IDictionary<K, V> dict, K key, Func<V> def)
     {
-        if (!dict.TryGetValue(key, out V res))
+        if (!dict.TryGetValue(key, out V? res))
         {
             return def();
         }
@@ -43,16 +44,16 @@ public static class UtilExtensions
     public static double WhenNaN(this double n, double other) => double.IsNaN(n) ? other : n;
     public static bool IsNaN(this float n) => float.IsNaN(n);
 
-    public static bool IsEmpty<K, V>(this IDictionary<K, V> c) => c == null || c.Count == 0;
-    public static bool IsEmpty<T>(this ICollection<T> c) => c == null || c.Count == 0;
-    public static bool IsEmptyRe<T>(this IReadOnlyCollection<T> c) => c == null || c.Count == 0;
+    public static bool IsEmpty<K, V>([NotNullWhen(false)] this IDictionary<K, V>? c) => c == null || c.Count == 0;
+    public static bool IsEmpty<T>([NotNullWhen(false)] this ICollection<T>? c) => c == null || c.Count == 0;
+    public static bool IsEmptyRe<T>([NotNullWhen(false)] this IReadOnlyCollection<T>? c) => c == null || c.Count == 0;
     public static bool IsEmpty<T>(this Option<T> o) => o.IsNone;
-    public static bool NonEmpty<K, V>(this IDictionary<K, V> c) => c != null && c.Count != 0;
-    public static bool NonEmpty<T>(this ICollection<T> c) => c != null && c.Count != 0;
-    public static bool NonEmptyRe<T>(this IReadOnlyCollection<T> c) => c != null && c.Count != 0;
+    public static bool NonEmpty<K, V>([NotNullWhen(true)] this IDictionary<K, V>? c) => c != null && c.Count != 0;
+    public static bool NonEmpty<T>([NotNullWhen(true)] this ICollection<T>? c) => c != null && c.Count != 0;
+    public static bool NonEmptyRe<T>([NotNullWhen(true)] this IReadOnlyCollection<T>? c) => c != null && c.Count != 0;
     public static bool NonEmpty<T>(this Option<T> o) => o.IsSome;
 
-    public static string AbbreviatedRange<T>(this IReadOnlyList<T> c, string prefix = "[", string separator = ", ", string postfix = "]", int chunkLength = 4)
+    public static string AbbreviatedRange<T>(this IReadOnlyList<T> c, string? prefix = "[", string? separator = ", ", string? postfix = "]", int chunkLength = 4)
     {
         if (c.IsEmptyRe() || c.Count <= chunkLength * 2 + 1)
         {
@@ -86,8 +87,8 @@ public static class UtilExtensions
         return builder.ToString();
     }
 
-    public static string CommaString<T>(this IEnumerable<T> c) => c.JoinedString("[", ", ", "]");
-    public static string JoinedString<T>(this IEnumerable<T> c, string prefix = null, string separator = null, string postfix = null)
+    public static string CommaString<T>(this IEnumerable<T>? c) => c.JoinedString("[", ", ", "]");
+    public static string JoinedString<T>(this IEnumerable<T>? c, string? prefix = null, string? separator = null, string? postfix = null)
     {
         StringBuilder builder = new();
 
@@ -135,8 +136,8 @@ public static class UtilExtensions
     public static T Get<T>(this Option<T> o) => o.IfNone(() => throw new InvalidOperationException("None.Get"));
     public static T GetOrElse<T>(this Option<T> o, T defaultVal) => o.IsSome ? o.Get() : defaultVal;
     public static T GetOrElse<T>(this Option<T> o, Func<T> defaultVal) => o.IsSome ? o.Get() : defaultVal();
-    public static T GetOrDefault<T>(this Option<T> o) => o.IsSome ? o.Get() : default;
-    public static bool TryGet<T>(this Option<T> o, out T value)
+    public static T? GetOrDefault<T>(this Option<T> o) => o.IsSome ? o.Get() : default;
+    public static bool TryGet<T>(this Option<T> o, [NotNullWhen(true)] out T? value) where T : notnull
     {
         if (!o.IsSome)
         {
@@ -168,6 +169,8 @@ public static class UtilExtensions
     public static bool IsEmptyEnu<T>(this IEnumerable<T> enu) => !enu.HasMoreThan(0);
 
     public static IEnumerable<T> SingleItemEnumerable<T>(this T item) => Enumerable.Repeat(item, 1);
+
+    public static IEnumerable<T> SkipNulls<T>(this IEnumerable<T?> c) where T : notnull => c.Where(x => x != null)!;
 
     public static void ForEach<T>(this IEnumerable<T> c, Action<T> action)
     {
@@ -235,7 +238,7 @@ public static class UtilExtensions
         return -1;
     }
 
-    public static (int index, T value) FirstIndexAndValueWhere<T>(this IEnumerable<T> en, Func<T, bool> predicate)
+    public static (int index, T? value) FirstIndexAndValueWhere<T>(this IEnumerable<T> en, Func<T, bool> predicate)
     {
         int index = 0;
         foreach (T item in en)
@@ -251,9 +254,9 @@ public static class UtilExtensions
         return (-1, default);
     }
 
-    public static (int count, T last) CountAndLast<T>(this IEnumerable<T> en, int atMost = -1)
+    public static (int count, T? last) CountAndLast<T>(this IEnumerable<T> en, int atMost = -1)
     {
-        T last = default;
+        T? last = default;
         int count = 0;
         foreach (T i in en)
         {
@@ -269,14 +272,14 @@ public static class UtilExtensions
         return (count, last);
     }
 
-    public static (int count, T max) CountAndMax<T>(this IEnumerable<T> en, Comparison<T> comparison, int atMost = -1)
+    public static (int count, T? max) CountAndMax<T>(this IEnumerable<T> en, Comparison<T> comparison, int atMost = -1)
     {
-        T max = default;
+        T? max = default;
         int count = 0;
         foreach (T i in en)
         {
             count++;
-            if (Object.Equals(max, default(T)) || comparison(max, i) <= 0)
+            if (Object.Equals(max, default(T)) || comparison(max!, i) <= 0)
             {
                 max = i;
             }
@@ -290,13 +293,13 @@ public static class UtilExtensions
         return (count, max);
     }
 
-    public static bool IsNullOrEmpty(this string str) => String.IsNullOrEmpty(str);
+    public static bool IsNullOrEmpty([NotNullWhen(false)] this string? str) => String.IsNullOrEmpty(str);
 
     public static string TakeString(this string str, int chars) => str[..Math.Min(str.Length, chars)];
 
     public static string[] SplitAt(this string str, int index) => new[] { str[..index], str[index..] };
 
-    public static string Truncate(this string value, int maxLength)
+    public static string? Truncate(this string? value, int maxLength)
     {
         if (!string.IsNullOrEmpty(value) && value.Length > maxLength)
         {
@@ -306,7 +309,7 @@ public static class UtilExtensions
         return value;
     }
 
-    public static string Truncate2(this string value, int maxLength)
+    public static string? Truncate2(this string? value, int maxLength)
     {
         if (!string.IsNullOrEmpty(value) && value.Length > maxLength)
         {

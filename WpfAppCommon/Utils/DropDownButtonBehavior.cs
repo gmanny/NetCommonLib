@@ -10,6 +10,7 @@ using Microsoft.Xaml.Behaviors;
 
 namespace WpfAppCommon.Utils;
 
+[System.Runtime.Versioning.SupportedOSPlatform("windows7.0")]
 public class DropDownButtonBehavior : Behavior<Button>
 {
     private long attachedCount;

@@ -18,7 +18,7 @@ public static class JsonExtensions
         { }
     }
 
-    public static T Deserialize<T>(this JsonSerializer ser, Stream value)
+    public static T? Deserialize<T>(this JsonSerializer ser, Stream value)
     {
         using SnippetCachingStream snippet = new(value, snippetLength: JsonDeserializationSnippetException.SnippetLength);
         using StreamReader reader = new(snippet);
@@ -56,7 +56,7 @@ public static class JsonExtensions
         }
     }
 
-    public static T Deserialize<T>(this JsonSerializer ser, string value)
+    public static T? Deserialize<T>(this JsonSerializer ser, string value)
     {
         ArgumentNullException.ThrowIfNull(ser);
 

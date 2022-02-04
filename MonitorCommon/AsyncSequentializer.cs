@@ -12,7 +12,7 @@ public class AsyncSequentializer
 
     private readonly TimeSpan delay; // between tasks
 
-    private TaskContainer tail;
+    private TaskContainer? tail;
 
     public AsyncSequentializer(TimeSpan delay = default)
     {
@@ -25,7 +25,7 @@ public class AsyncSequentializer
         Task<T> ret = next.Task;
         TaskContainer ntx = new(ret, delay.Ticks > 0 ? ret.FlatMapAll(_ => Task.Delay(delay).ToUnit()) : ret.ToUnit());
 
-        TaskContainer p = Interlocked.Exchange(ref tail, ntx);
+        TaskContainer? p = Interlocked.Exchange(ref tail, ntx);
         if (p != null)
         {
             Task prev = noDelay ? p.WithoutDelay : p.WithDelay;

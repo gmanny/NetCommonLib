@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 
 namespace WpfAppCommon.CollectionSegmenting.SubHelpers;
 
@@ -19,7 +18,7 @@ public abstract class AbstractCollectionSubscriptionHelper<TItem> : IDisposable
 
     private bool isDisposed;
 
-    protected AbstractCollectionSubscriptionHelper([NotNull] IList<TItem> collection, [NotNull] INotifyCollectionChanged notifier, bool collectionOwnerMode = true)
+    protected AbstractCollectionSubscriptionHelper(IList<TItem> collection, INotifyCollectionChanged notifier, bool collectionOwnerMode = true)
     {
         ArgumentNullException.ThrowIfNull(collection);
         ArgumentNullException.ThrowIfNull(notifier);
@@ -144,7 +143,7 @@ public abstract class AbstractCollectionSubscriptionHelper<TItem> : IDisposable
     /// <param name="newIndex">new item index</param>
     protected abstract void OnItemMoved(TItem item, int oldIndex, int newIndex);
 
-    private void OnNotifierCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    private void OnNotifierCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         bool addRemove = false;
 
@@ -152,14 +151,18 @@ public abstract class AbstractCollectionSubscriptionHelper<TItem> : IDisposable
         {
             case NotifyCollectionChangedAction.Add:
             {
-                // ReSharper disable once PossibleNullReferenceException
+                if (e.NewItems == null)
+                {
+                    break;
+                }
+                
                 for (int i = 0; i < e.NewItems.Count; i++)
                 {
                     // get a new item
-                    object itemObject = e.NewItems[i];
+                    object? itemObject = e.NewItems[i];
 
                     // try to cast it
-                    TItem item = (TItem) itemObject;
+                    TItem item = (TItem) itemObject!;
 
                     // signal item addition
                     AddItem(item, e.NewStartingIndex + i, false);
@@ -168,14 +171,18 @@ public abstract class AbstractCollectionSubscriptionHelper<TItem> : IDisposable
 
             case NotifyCollectionChangedAction.Move:
             {
-                // ReSharper disable once PossibleNullReferenceException
+                if (e.NewItems == null)
+                {
+                    break;
+                }
+                
                 for (int i = 0; i < e.NewItems.Count; i++)
                 {
                     // get moved item
-                    object itemObject = e.NewItems[i];
+                    object? itemObject = e.NewItems[i];
 
                     // try to cast it
-                    TItem item = (TItem) itemObject;
+                    TItem item = (TItem) itemObject!;
 
                     // signal item move
                     MoveItem(item, e.OldStartingIndex + i, e.NewStartingIndex + i);
@@ -184,14 +191,18 @@ public abstract class AbstractCollectionSubscriptionHelper<TItem> : IDisposable
 
             case NotifyCollectionChangedAction.Remove:
             {
-                // ReSharper disable once PossibleNullReferenceException
+                if (e.OldItems == null)
+                {
+                    break;
+                }
+                
                 for (int i = 0; i < e.OldItems.Count; i++)
                 {
                     // get removed item
-                    object itemObject = e.OldItems[i];
+                    object? itemObject = e.OldItems[i];
 
                     // try to cast it
-                    TItem item = (TItem) itemObject;
+                    TItem item = (TItem) itemObject!;
 
                     // signal item removal
                     RemoveItem(item, e.OldStartingIndex + i);

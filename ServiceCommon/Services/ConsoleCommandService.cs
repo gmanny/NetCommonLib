@@ -17,7 +17,7 @@ public class ConsoleCommandService
         StartThread();
     }
 
-    public void AddCommand(string command, Action<string> action, string help = null)
+    public void AddCommand(string command, Action<string> action, string? help = null)
     {
         lock (menu)
         {

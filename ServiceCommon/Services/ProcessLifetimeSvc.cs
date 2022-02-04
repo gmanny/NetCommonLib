@@ -13,7 +13,7 @@ public class ProcessLifetimeSvc
 {
     private readonly ConcurrentDictionary<Func<Task>, Unit> handlers = new();
 
-    private ILogger logger;
+    private ILogger? logger;
     private int done;
 
     public ProcessLifetimeSvc()
@@ -33,12 +33,12 @@ public class ProcessLifetimeSvc
         remove => handlers.TryRemove(value, out _);
     }
 
-    private void OnConsoleCancel(object sender, ConsoleCancelEventArgs e)
+    private void OnConsoleCancel(object? sender, ConsoleCancelEventArgs e)
     {
         RunHandlers("console cancel");
     }
 
-    private void OnProcessExit(object sender, EventArgs e)
+    private void OnProcessExit(object? sender, EventArgs e)
     {
         RunHandlers("process exit");
     }
@@ -47,11 +47,11 @@ public class ProcessLifetimeSvc
     {
         if (handlers.NonEmpty() && Interlocked.Exchange(ref done, 1) == 0)
         {
-            logger.LogInformation($"Running {handlers.Count} app exit handlers at {place}");
+            logger?.LogInformation($"Running {handlers.Count} app exit handlers at {place}");
 
             Task.WhenAll(handlers.Keys.Select(h => h())).Wait();
 
-            logger.LogInformation($"All {handlers.Count} app exit handlers finished successfully");
+            logger?.LogInformation($"All {handlers.Count} app exit handlers finished successfully");
         }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Xaml.Behaviors;
 // from https://stackoverflow.com/a/8830961/579817
 namespace WpfAppCommon.Utils;
 
+[System.Runtime.Versioning.SupportedOSPlatform("windows7.0")]
 public class ScrollIntoViewForListBox : Behavior<ListBox>
 {
     /// <summary>

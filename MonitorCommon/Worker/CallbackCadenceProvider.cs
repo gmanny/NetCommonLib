@@ -18,18 +18,18 @@ public class CallbackCadenceProvider<TState> : IDisposable
     private readonly TimeSpan taskDelay;
     private readonly int threadCount;
     private readonly bool logTime;
-    private readonly Func<TState> makeState;
-    private readonly AsyncSequentializer sequentializer;
+    private readonly Func<TState?>? makeState;
+    private readonly AsyncSequentializer? sequentializer;
 
     private readonly Timer timer;
 
-    private readonly ConcurrentDictionary<Action<TState>, int> actions = new();
+    private readonly ConcurrentDictionary<Action<TState?>, int> actions = new();
 
     private int iterationCount;
     private Task currentIteration = Task.CompletedTask;
     private bool canceled;
 
-    public CallbackCadenceProvider(TimeSpan initialDelay, TimeSpan period, ILogger logger, string name, TimeSpan taskDelay, int threadCount = 1, bool logTime = false, Func<TState> makeState = null, AsyncSequentializer sequentializer = null)
+    public CallbackCadenceProvider(TimeSpan initialDelay, TimeSpan period, ILogger logger, string name, TimeSpan taskDelay, int threadCount = 1, bool logTime = false, Func<TState?>? makeState = null, AsyncSequentializer? sequentializer = null)
     {
         this.period = period;
         this.logger = logger;
@@ -45,7 +45,7 @@ public class CallbackCadenceProvider<TState> : IDisposable
 
     public Task CurrentIteration => currentIteration;
 
-    public event Action<TState> Timer
+    public event Action<TState?> Timer
     {
         add { actions.AddOrUpdate(value, 1, (_, i) => i + 1); }
         remove
@@ -64,7 +64,7 @@ public class CallbackCadenceProvider<TState> : IDisposable
         }
     }
 
-    private void OnTimer(object _) => Run();
+    private void OnTimer(object? _) => Run();
 
     private void Run()
     {
@@ -82,14 +82,14 @@ public class CallbackCadenceProvider<TState> : IDisposable
     {
         try
         {
-            List<Action<TState>> a = actions.Keys.ToList();
+            List<Action<TState?>> a = actions.Keys.ToList();
             if (a.NonEmpty())
             {
                 DateTime start = DateTime.UtcNow;
 
                 iterationCount++;
 
-                TState state = makeState != null ? makeState() : default;
+                TState? state = makeState != null ? makeState() : default;
                 if (state != null)
                 {
                     state.Started();
